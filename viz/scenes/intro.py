@@ -1,7 +1,7 @@
 from manim import *
 from manim_slides.slide import ThreeDSlide
 from viz.utils.tile import Tile
-from random import random
+from random import random, seed as rand_seed
 
 config["max_files_cached"] = -1
 
@@ -10,6 +10,7 @@ class IntroSlide(ThreeDSlide):
     skip_reversing = True
 
     def construct(self) -> None:
+        rand_seed(42)
 
         board: Rectangle = Rectangle(
             width=2, height=2, grid_xstep=1.0, grid_ystep=1.0).set_style(stroke_width=2, stroke_color=BLUE_D).set_z_index(99)
@@ -30,7 +31,7 @@ class IntroSlide(ThreeDSlide):
             self.play(GrowFromCenter(tile.visual, run_time=.1))
 
         self.move_camera(phi=0, theta=-90 * DEGREES)
-        slide_number: Text = Text("1/10").move_to(DOWN * 7. + RIGHT * 13.)
+        slide_number: Text = Text("1/24").move_to(DOWN * 7. + RIGHT * 13.)
         self.play(FadeIn(slide_number))
 
         self.next_section()
@@ -86,7 +87,7 @@ class IntroSlide(ThreeDSlide):
         self.play(FadeIn(board, run_time=.3))
 
         self.next_slide()
-        t_slide_number: Text = Text("2/10").move_to(DOWN * 7. + RIGHT * 13.)
+        t_slide_number: Text = Text("2/24").move_to(DOWN * 7. + RIGHT * 13.)
         self.play(ReplacementTransform(slide_number, t_slide_number))
         slide_number = t_slide_number
 
@@ -138,7 +139,10 @@ class IntroSlide(ThreeDSlide):
         self.wait(1)
         self.play(Rotate(selected_tile.visual, 90 * DEGREES))
 
-        self.next_section()
+        self.next_slide()
+        t_slide_number: Text = Text("2/24").move_to(DOWN * 7. + RIGHT * 13.)
+        self.play(ReplacementTransform(slide_number, t_slide_number))
+        slide_number = t_slide_number
 
         self.play(Rotate(selected_tile.visual, 90 * DEGREES))
         self.play(selected_tile.visual.animate.move_to((-0., -1., 0.)))
@@ -340,8 +344,6 @@ class IntroSlide(ThreeDSlide):
         )
 
         self.move_camera(zoom=1., frame_center=(0., 0., 0.))
-
-        self.wait()
 
     def reset_tile(self, tile: Tile, offest: Vector, rotate: bool = True) -> None:
         tile.reset_pos()

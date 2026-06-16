@@ -1,0 +1,4 @@
+measure,avg_dfs,avg_guided
+cost,5.153,5.996
+forward,25.950,25.096
+backward,1.500,0.646

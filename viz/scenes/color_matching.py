@@ -21,6 +21,9 @@ class ColorMatching(ThreeDSlide):
 
         self.set_camera_orientation(zoom=.5)
 
+        slide_number: Text = Text("11/24").move_to(DOWN * 7. + RIGHT * 13.)
+        self.play(Write(slide_number))
+
         code: Code = Code(
             code_string="# Your code here",
             add_line_numbers=False
@@ -64,6 +67,10 @@ class ColorMatching(ThreeDSlide):
 
         self.fade_all_out()
 
+        t_slide_number: Text = Text("12/24").move_to(DOWN * 7. + RIGHT * 13.)
+        self.play(ReplacementTransform(slide_number, t_slide_number))
+        slide_number = t_slide_number
+
         w = 6
         h = 6
         t_board: VGroup = self.create_board(w, h)
@@ -78,7 +85,7 @@ class ColorMatching(ThreeDSlide):
         self.next_section()
 
         seq = [FadeOut(line) for line in lines]
-        self.play(Succession(*seq, run_time=.2))
+        self.play(Succession(*seq, run_time=1))
 
         w = 8
         h = 8
@@ -95,7 +102,7 @@ class ColorMatching(ThreeDSlide):
         self.next_section()
 
         seq = [FadeOut(line) for line in lines]
-        self.play(Succession(*seq, run_time=.2))
+        self.play(Succession(*seq, run_time=1))
 
         w = 10
         h = 10
@@ -108,7 +115,10 @@ class ColorMatching(ThreeDSlide):
 
         lines = self.greedy_tile(cells, pairs, board)
 
-        self.next_section()
+        self.next_slide()
+        t_slide_number: Text = Text("13/24").move_to(DOWN * 7. + RIGHT * 13.)
+        self.play(ReplacementTransform(slide_number, t_slide_number))
+        slide_number = t_slide_number
 
         avg_cost: int = self.calc_avg_cost(board, cast(list[int], pairs))
 
@@ -120,10 +130,6 @@ class ColorMatching(ThreeDSlide):
         self.play(Create(score_text))
         self.play(score_color)
 
-        self.next_section()
-
-        self.fade_all_out()
-
     def calc_avg_cost(self, board: VGroup, pairs: list[int]) -> int:
         avg_cost = 0
         for i in range(len(pairs)):
@@ -132,7 +138,8 @@ class ColorMatching(ThreeDSlide):
                 b = board[pairs[i]].get_color().to_integer()
 
                 avg_cost += abs(a - b)
-        return avg_cost
+        return round(avg_cost / (len(board) * .5)
+                     )
 
     def fade_all_out(self, run_time=.2) -> None:
         self.play(
@@ -142,9 +149,14 @@ class ColorMatching(ThreeDSlide):
     def intro(self) -> None:
         title: Text = Text("\"Close Enough\" Matching")
 
-        self.play(FadeIn(title))
+        slide_number: Text = Text("8/24").move_to(DOWN * 7. + RIGHT * 13.)
 
-        self.next_section()
+        self.play(FadeIn(title), Write(slide_number))
+
+        self.next_slide()
+        t_slide_number: Text = Text("9/24").move_to(DOWN * 7. + RIGHT * 13.)
+        self.play(ReplacementTransform(slide_number, t_slide_number))
+        slide_number = t_slide_number
 
         self.play(FadeOut(title))
 
@@ -152,7 +164,7 @@ class ColorMatching(ThreeDSlide):
 
         board: VGroup = self.create_board(5, 5)
 
-        self.play(Create(board, run_time=.3))
+        self.play(Create(board, run_time=2))
 
         self.next_section()
 
@@ -166,6 +178,10 @@ class ColorMatching(ThreeDSlide):
         else:
             self.play(Circumscribe(
                 VGroup(cast(Square, board[0]), cast(Square, board[5])), run_time=4))
+
+        t_slide_number: Text = Text("10/24").move_to(DOWN * 7. + RIGHT * 13.)
+        self.play(ReplacementTransform(slide_number, t_slide_number))
+        slide_number = t_slide_number
 
         self.play(FadeOut(board))
 
@@ -184,7 +200,8 @@ class ColorMatching(ThreeDSlide):
 
         self.play(
             FadeOut(color_band),
-            FadeOut(code)
+            FadeOut(code),
+            FadeOut(slide_number),
         )
 
     def create_board(self, w: int, h: int) -> VGroup:
@@ -241,7 +258,8 @@ class ColorMatching(ThreeDSlide):
                 line: Line = Line(
                     board[i].get_center(), board[j].get_center(), buff=0., color=BLACK)
                 lines.append(line)
-                self.play(FadeIn(line, run_time=0.2))
                 break
+
+        self.play(Succession(*(FadeIn(line) for line in lines), run_time=2))
 
         return lines

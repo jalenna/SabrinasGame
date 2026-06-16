@@ -22,6 +22,9 @@ class OddBoardsSlide(ThreeDSlide):
 
         board: Rectangle = self.create_board(8, 9)
 
+        slide_number: Text = Text("7/24").move_to(DOWN * 7. + RIGHT * 13.)
+        self.play(Write(slide_number))
+
         self.play(Create(board))
         self.play(board.animate.shift(LEFT * 3))
 
@@ -120,8 +123,6 @@ class OddBoardsSlide(ThreeDSlide):
             self.play(FadeIn(tile.visual, run_time=.2))
             col += 2
 
-        self.wait()
-
     def reason(self) -> None:
         boards = [
             self.create_labelled_board(2, 2, BLUE_A),
@@ -141,6 +142,9 @@ class OddBoardsSlide(ThreeDSlide):
         grouped = VGroup(boards)
 
         self.move_camera(phi=0, theta=-90 * DEGREES)
+
+        slide_number: Text = Text("6/24").move_to(DOWN * 7. + RIGHT * 13.)
+        self.play(Write(slide_number))
 
         self.play(grouped.animate.arrange())
         self.move_camera(frame_center=grouped)
@@ -222,6 +226,10 @@ class OddBoardsSlide(ThreeDSlide):
 
         self.play(FadeIn(table))
 
+        slide_number: Text = Text("5/24").move_to(DOWN * 7. + RIGHT * 13.)
+
+        self.play(Write(slide_number))
+
         self.next_section()
 
         t_table: Table = Table(
@@ -246,7 +254,7 @@ class OddBoardsSlide(ThreeDSlide):
         table = t_table
 
         self.next_section()
-        self.play(FadeOut(table))
+        self.play(FadeOut(table), FadeOut(slide_number))
 
     def monkey(self) -> None:
         boards = [
@@ -261,11 +269,18 @@ class OddBoardsSlide(ThreeDSlide):
 
         self.move_camera(phi=0, theta=-90 * DEGREES, zoom=.5)
 
+        slide_number: Text = Text("3/24").move_to(DOWN * 7. + RIGHT * 13.)
+
+        self.play(Write(slide_number))
+
         self.play(
             boards[i].animate.move_to((i * 5, 0., 0.)) for i in range(len(boards))
         )
 
-        self.next_section()
+        self.next_slide()
+        t_slide_number: Text = Text("4/24").move_to(DOWN * 7. + RIGHT * 13.)
+        self.play(ReplacementTransform(slide_number, t_slide_number))
+        slide_number = t_slide_number
 
         self.play(
             FadeOut(board) for board in boards
@@ -279,7 +294,7 @@ class OddBoardsSlide(ThreeDSlide):
 
         self.next_section()
 
-        self.play(FadeOut(passes_header))
+        self.play(FadeOut(passes_header), FadeOut(slide_number))
 
         pass_fail_rows: list[VGroup] = []
 
