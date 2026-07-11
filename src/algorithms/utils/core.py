@@ -1,16 +1,5 @@
-from dataclasses import dataclass
-from typing import Callable, Optional
-from src.algorithms.utils.types import Neighbors, Pairs, Tiles, iVec2D, VariableDims
-
-
-@dataclass
-class JBoardParams:
-    """TODO"""
-
-    width: int
-    height: int
-    generatable_dims: Optional[VariableDims]
-    costs_range: Optional[iVec2D]
+from typing import Callable
+from src.algorithms.utils.types import Neighbors, Pairs, Tiles, iVec2D
 
 
 type CostFunc = Callable[[float, float], float]

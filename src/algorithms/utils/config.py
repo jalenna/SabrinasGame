@@ -6,6 +6,6 @@ board_sizes: VariableDims = (
     [4, 6, 8]
 )
 
-costs_range = (1, 10)
+costs_range: tuple[int, int] = (1, 10)
 
-sample_multiplier = 1
+sample_multiplier: int = 1

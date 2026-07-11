@@ -1,5 +1,3 @@
-"""CNN Guided Depth First Search Module"""
-
 import torch
 from typing import override
 from src.algorithms.ml.cnn import CNN
@@ -9,8 +7,6 @@ from src.algorithms.utils.types import Neighbors, Tiles, iVec2D
 
 
 class GuidedJDFSSolver(JAlgorithmBase):
-    """TODO"""
-
     def __init__(self, cost_func):
         super().__init__(cost_func)
         self._required_tiles: int = 0

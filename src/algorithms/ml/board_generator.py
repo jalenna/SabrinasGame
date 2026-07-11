@@ -1,11 +1,11 @@
 import torch
+from . import config
 from random import randint
 from typing import override
 from torch.utils.data import Dataset
 from src.algorithms.mcmf import JMCMFSolver
 from src.algorithms.utils.core import absdiff, create_neighbors
 from src.algorithms.utils.types import Neighbors, Tiles, VariableDims, Pairs, iVec2D
-from . import config
 
 
 class BoardMLTrainData(Dataset):

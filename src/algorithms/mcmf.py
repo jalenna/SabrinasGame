@@ -1,24 +1,15 @@
-"""
-Min Cost Flow Solver Module
-"""
-
-from typing import Any, override
+from typing import override
 from collections import defaultdict, deque
 from src.algorithms.base import JAlgorithmBase
 from src.algorithms.utils.types import Graph, Neighbors, Tiles, iVec2D, Edge
 
 
 class JMCMFSolver(JAlgorithmBase):
-    """TODO"""
-
     def __init__(self, cost_func):
         super().__init__(cost_func)
         self.source_idx: int = 0
         self.sink_idx: int = 0
         self.graph: Graph = defaultdict(list)
-
-    def __call__(self, tiles: Tiles, neighbors: Neighbors, dims: iVec2D) -> bool:
-        return self.solve(tiles, neighbors, dims)
 
     @override
     def solve(self, tiles: Tiles, neighbors: Neighbors, dims: iVec2D) -> bool:

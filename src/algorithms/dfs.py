@@ -1,13 +1,9 @@
-"""Depth First Search Module"""
-
 from typing import override
 from src.algorithms.base import JAlgorithmBase
 from src.algorithms.utils.types import Neighbors, Tiles, iVec2D
 
 
 class JDFSSolver(JAlgorithmBase):
-    """TODO"""
-
     def __init__(self, cost_func):
         super().__init__(cost_func)
         self._required_tiles: int = 0
