@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class JAlgorithmStatsTracker:
     steps_forward: int
@@ -7,4 +8,9 @@ class JAlgorithmStatsTracker:
     score: float
 
     @property
-    def total_steps(self) -> int: return self.steps_forward + self.steps_backward
+    def total_steps(self) -> int: return self.steps_forward + \
+        self.steps_backward
+
+
+class NoTracker(JAlgorithmStatsTracker):
+    ...

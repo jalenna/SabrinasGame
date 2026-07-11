@@ -1,29 +1,27 @@
+from typing import Optional
+
+import torch
 import torch.nn as nn
+import torch.nn.functional as F
+from . import config
 
 
 class CNN(nn.Module):
-    def __init__(self, out_channels=1):
-        super(CNN, self).__init__()
+    def __init__(self, output_size: Optional[int] = None):
+        super().__init__()
+        max_size: int = max(config.board_sizes[0]) * max(config.board_sizes[1])
 
-        self.network = nn.Sequential(
-            nn.Conv2d(in_channels=2, out_channels=32,
-                      kernel_size=3, padding=1),
-            nn.ReLU(),
-
-            nn.Conv2d(in_channels=32, out_channels=64,
-                      kernel_size=3, padding=1),
-            nn.ReLU(),
-
-            nn.Conv2d(in_channels=64, out_channels=32,
-                      kernel_size=3, padding=1),
-            nn.ReLU(),
-
-            # Use the parameter here
-            nn.Conv2d(in_channels=32, out_channels=out_channels,
-                      kernel_size=3, padding=1)
-        )
+        self.conv1 = nn.Conv2d(2, 32, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.pool = nn.AdaptiveAvgPool2d((4, 4))
+        self.fc1 = nn.Linear(64 * 4 * 4, 128)
+        self.fc2 = nn.Linear(128, output_size if output_size else max_size)
 
     def forward(self, x):
-        out = self.network(x)
-
-        return out.squeeze(1)
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = self.pool(x)
+        x = torch.flatten(x, 1)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x

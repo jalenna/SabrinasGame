@@ -8,8 +8,8 @@ from src.algorithms.utils.types import Neighbors, Tiles, iVec2D
 class JDFSSolver(JAlgorithmBase):
     """TODO"""
 
-    def __init__(self, tracker, cost_func):
-        super().__init__(tracker, cost_func)
+    def __init__(self, cost_func):
+        super().__init__(cost_func)
         self._required_tiles: int = 0
         self._curr_num_tiles: int = 0
         self.neighbors: Neighbors = []
@@ -21,7 +21,7 @@ class JDFSSolver(JAlgorithmBase):
         self._curr_num_tiles = 0
         self._pairs = [-1] * len(tiles)
         self.neighbors = neighbors
-        self._solve()
+        return self._solve()
 
     def _solve(self) -> bool:
         if self._required_tiles == self._curr_num_tiles:

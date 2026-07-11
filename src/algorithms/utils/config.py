@@ -1,12 +1,5 @@
-from pathlib import Path
-
 from src.algorithms.utils.types import VariableDims
 
-save_path = Path("models/checkpoints/tiler/cnn.pt")
-
-epochs = 100
-steps_per_epoch = 200
-lr = 0.001
 
 board_sizes: VariableDims = (
     [4, 6, 8],

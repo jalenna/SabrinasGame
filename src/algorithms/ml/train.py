@@ -1,50 +1,40 @@
 import torch
+from . import config
+from .cnn import CNN
 import torch.nn as nn
 import torch.optim as optim
-from algorithms.ml.cnn import CNN
-from algorithms.ml.board import BoardGenerator
+from .board import BoardMLTrainData
+from torch.utils.data import DataLoader
 
-from algorithms.ml.config import save_path, board_size_options, lr, epochs, steps_per_epoch
+board_dataset: BoardMLTrainData = BoardMLTrainData(config.board_sizes)
+board_dataset.generate(config.costs_range, config.sample_multiplier)
 
-data_gen = BoardGenerator(board_size_options)
+trainloader: DataLoader[BoardMLTrainData] = DataLoader(board_dataset)
+
 model = CNN()
 
-criterion = nn.L1Loss()
-optimizer = optim.Adam(model.parameters(), lr)
+criterion = nn.MSELoss()
+optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
-val_x, val_y, _ = data_gen.generate_ml_sample()
-val_tensor_x = torch.tensor(val_x, dtype=torch.float32).unsqueeze(0)
+print("Training CNN...")
 
-print("Beginning training on dynamic board dimensions...")
-
-for epoch in range(epochs):
-    model.train()
+for epoch in range(config.epochs):
     running_loss = 0.0
-
-    for step in range(steps_per_epoch):
-        x, y, _ = data_gen.generate_ml_sample()
-
-        batch_x = torch.tensor(x, dtype=torch.float32).unsqueeze(0)
-        batch_y = torch.tensor(y, dtype=torch.float32).unsqueeze(0)
+    for i, data in enumerate(trainloader, 0):
+        inputs, labels = data
 
         optimizer.zero_grad()
 
-        predictions = model(batch_x)
-        loss = criterion(predictions, batch_y)
-
+        outputs = model(inputs)
+        loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
 
         running_loss += loss.item()
+        if i % 2000 == 1999:
+            print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
+        running_loss = 0.0
 
-    epoch_loss = running_loss / steps_per_epoch
-    if (epoch + 1) % 5 == 0 or epoch == 0:
-        print(
-            f"Epoch {epoch+1:02d}/{epochs} | Training MAE Loss: {epoch_loss:.4f}")
+torch.save(model.state_dict(), config.save_path)
 
-print("\nTraining Phase Complete.")
-
-save_path.parent.mkdir(parents=True, exist_ok=True)
-
-torch.save(model.state_dict(), save_path)
-print(f"Model weights successfully saved to {save_path}")
+print('Finished Training, model saved to:', config.save_path)

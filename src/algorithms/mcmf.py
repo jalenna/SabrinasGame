@@ -2,27 +2,30 @@
 Min Cost Flow Solver Module
 """
 
-from typing import override
+from typing import Any, override
 from collections import defaultdict, deque
 from src.algorithms.base import JAlgorithmBase
 from src.algorithms.utils.types import Graph, Neighbors, Tiles, iVec2D, Edge
 
 
-class MCMFSolver(JAlgorithmBase):
+class JMCMFSolver(JAlgorithmBase):
     """TODO"""
 
-    def __init__(self, tracker, cost_func):
-        super().__init__(tracker, cost_func)
+    def __init__(self, cost_func):
+        super().__init__(cost_func)
         self.source_idx: int = 0
         self.sink_idx: int = 0
-        self.graph: Graph = defaultdict[Graph](list)
+        self.graph: Graph = defaultdict(list)
+
+    def __call__(self, tiles: Tiles, neighbors: Neighbors, dims: iVec2D) -> bool:
+        return self.solve(tiles, neighbors, dims)
 
     @override
     def solve(self, tiles: Tiles, neighbors: Neighbors, dims: iVec2D) -> bool:
         self.source_idx = len(tiles)
         self.sink_idx = len(tiles) + 1
 
-        self.graph = defaultdict[Graph](list)
+        self.graph = defaultdict(list)
         self._create_graph(tiles, neighbors, dims)
 
         while True:
@@ -34,12 +37,13 @@ class MCMFSolver(JAlgorithmBase):
             self._commit_construction(parent_node, parent_edge)
 
         self._reconstruct(tiles, dims)
+        return True
 
     def _spfa(self, tiles: Tiles) -> tuple[list[float], list[int], list[int]]:
-        distance: list[float] = [float("inf")] * len(tiles + 2)
-        parent_node: list[int] = [-1] * len(tiles + 2)
-        parent_edge: list[int] = [-1] * len(tiles + 2)
-        queued: list[bool] = [False] * len(tiles + 2)
+        distance: list[float] = [float("inf")] * (len(tiles) + 2)
+        parent_node: list[int] = [-1] * (len(tiles) + 2)
+        parent_edge: list[int] = [-1] * (len(tiles) + 2)
+        queued: list[bool] = [False] * (len(tiles) + 2)
 
         distance[self.source_idx] = 0.0
 
@@ -110,6 +114,8 @@ class MCMFSolver(JAlgorithmBase):
                         cost=self.cost_func(tiles[a], tiles[b]),
                     )
 
-    def _add_edge(self, start: int, to: int, cost: int, capacity: int) -> None:
-        self.graph[start].append(Edge(start, to, len(self.graph[to]), cost, capacity))
-        self.graph[to].append(Edge(to, start, len(self.graph[start]) - 1, -cost, 0))
+    def _add_edge(self, start: int, to: int, cost: float, capacity: int) -> None:
+        self.graph[start].append(
+            Edge(start, to, len(self.graph[to]), cost, capacity))
+        self.graph[to].append(
+            Edge(to, start, len(self.graph[start]) - 1, -cost, 0))

@@ -1,6 +1,6 @@
-from typing import Callable, Optional
 from dataclasses import dataclass
-from src.algorithms.utils.types import Neighbors, Pairs, Tiles, iVec2D
+from typing import Callable, Optional
+from src.algorithms.utils.types import Neighbors, Pairs, Tiles, iVec2D, VariableDims
 
 
 @dataclass
@@ -9,35 +9,34 @@ class JBoardParams:
 
     width: int
     height: int
-    generatable_dims: Optional[list[list[int], list[int]]]
+    generatable_dims: Optional[VariableDims]
     costs_range: Optional[iVec2D]
 
 
 type CostFunc = Callable[[float, float], float]
 
 
-def create_neighbors(
-    width: int, height: int, tiles: Tiles, cost_func: CostFunc
-) -> Neighbors:
+def create_neighbors(dims: iVec2D, tiles: Tiles, cost_func: CostFunc
+                     ) -> Neighbors:
     neighbors: Neighbors = []
 
-    for i in range(width * height):
-        row: int = i // width
-        col: int = i % width
+    for i in range(dims.x * dims.y):
+        row: int = i // dims.x
+        col: int = i % dims.x
         current_cell: list[int] = []
 
         # Left
         if col > 0:
             current_cell.append(i - 1)
         # Right
-        if col + 1 < width:
+        if col + 1 < dims.x:
             current_cell.append(i + 1)
         # Up
         if row > 0:
-            current_cell.append(i - width)
+            current_cell.append(i - dims.x)
         # Down
-        if row + 1 < height:
-            current_cell.append(i + width)
+        if row + 1 < dims.y:
+            current_cell.append(i + dims.x)
 
         current_cell.sort(key=lambda x, i=i: cost_func(tiles[i], tiles[x]))
         neighbors.append(current_cell)
