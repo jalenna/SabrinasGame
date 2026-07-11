@@ -1,6 +1,6 @@
 import torch
-from cnn import CNN
-from config import save_path
+from algorithms.ml.cnn import CNN
+from algorithms.ml.config import save_path
 
 loaded_model = CNN()
 

@@ -1,7 +1,7 @@
 from dfs import DFS
-from ml.board import BoardGenerator
-from ml.guided_dfs import CNNGuidedDFS
-from ml.config import save_path, board_size_options
+from algorithms.ml.board import BoardGenerator
+from algorithms.guided_dfs import CNNGuidedDFS
+from algorithms.ml.config import save_path, board_size_options
 from typing import cast
 
 guided_dfs: CNNGuidedDFS = CNNGuidedDFS(save_path)
@@ -33,13 +33,13 @@ for i in range(iterations):
     guided_dfs_pairs = guided_dfs.solve(board)
 
     dfs_cost: float = data_gen.calc_avg_cost(
-        flattened_board, cast(list[int], dfs.pairs))
+        flattened_board, cast(list[int], dfs.pairs)
+    )
     dfs_avg["cost"] += dfs_cost
     dfs_avg["forward"] += dfs.forw
     dfs_avg["backward"] += dfs.back
 
-    guided_cost: float = data_gen.calc_avg_cost(
-        flattened_board, guided_dfs_pairs)
+    guided_cost: float = data_gen.calc_avg_cost(flattened_board, guided_dfs_pairs)
     guided_avg["cost"] += guided_cost
     guided_avg["forward"] += guided_dfs.forw
     guided_avg["backward"] += guided_dfs.back
@@ -64,7 +64,6 @@ with open(results_path, "w+") as f:
     f.write("measure,avg_dfs,avg_guided\n")
     f.write(f"cost,{dfs_avg["cost"]:.3f},{guided_avg["cost"]:.3f}\n")
     f.write(f"forward,{dfs_avg["forward"]:.3f},{guided_avg["forward"]:.3f}\n")
-    f.write(
-        f"backward,{dfs_avg["backward"]:.3f},{guided_avg["backward"]:.3f}\n")
+    f.write(f"backward,{dfs_avg["backward"]:.3f},{guided_avg["backward"]:.3f}\n")
 
 print(f"Done! Saved to {results_path}")

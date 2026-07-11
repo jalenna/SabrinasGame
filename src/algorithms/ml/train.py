@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from cnn import CNN
-from board import BoardGenerator
+from algorithms.ml.cnn import CNN
+from algorithms.ml.board import BoardGenerator
 
-from config import save_path, board_size_options, lr, epochs, steps_per_epoch
+from algorithms.ml.config import save_path, board_size_options, lr, epochs, steps_per_epoch
 
 data_gen = BoardGenerator(board_size_options)
 model = CNN()
