@@ -1,8 +1,7 @@
 from manim import *
 from manim_slides.slide import ThreeDSlide
 from random import randrange, seed as rand_seed
-from viz.utils.tile import Cell
-from typing import cast
+
 config["max_files_cached"] = -1
 
 
@@ -450,70 +449,6 @@ class SabrinasGame(ThreeDSlide):
 
         self.play(rules.animate.arrange(DOWN, center=False))
 
-    def greedy_tile(self, cells: list[Cell], pairs: list[int | None], board: VGroup) -> list[Line]:
-        lines: list[Line] = []
-
-        for i in range(len(cells)):
-            if pairs[i] is not None:
-                continue
-
-            for j in cells[i].neighbor_ids:
-                if pairs[j] is not None:
-                    continue
-
-                pairs[i] = j
-                pairs[j] = i
-                line: Line = Line(
-                    board[i].get_center(), board[j].get_center(), buff=MED_SMALL_BUFF, color=BLACK)
-                lines.append(line)
-                break
-
-        self.play(Succession(*(FadeIn(line) for line in lines), run_time=1))
-
-        return lines
-
-    def dfs_solve(self, cells: list[Cell], pairs: list[int | None], history: list) -> bool:
-        if self._required_tiles == self._curr_num_tiles:
-            history.append(pairs.copy())  # Final state
-            return True
-
-        start = -1
-        for i, pair in enumerate(pairs):
-            if pair is None:
-                start = i
-                break
-
-        if start == -1:
-            return False
-
-        for neighbor in cells[start].neighbor_ids:
-            if pairs[neighbor] is not None:
-                continue
-
-            pairs[neighbor] = start
-            pairs[start] = neighbor
-            self._curr_num_tiles += 1
-
-            # Current state
-            history.append(pairs.copy())
-
-            if self.dfs_solve(cells, pairs, history):
-                return True
-
-            pairs[neighbor] = None
-            pairs[start] = None
-            self._curr_num_tiles -= 1
-
-            # Backtracked state
-            history.append(pairs.copy())
-
-        return False
-
-    def fade_all_out(self, run_time=.2) -> None:
-        self.play(
-            *[FadeOut(mob, run_time=run_time)for mob in self.mobjects]
-        )
-
     def create_textbox(self, content: VMobject, color: ManimColor = WHITE, stroke_color: ManimColor = BLACK) -> VGroup:
         result = VGroup()
         box = Rectangle(
@@ -543,44 +478,3 @@ class SabrinasGame(ThreeDSlide):
                 Text(str(v), color=BLACK, font_size=24)))
 
         return group.arrange_in_grid(h, w, 0.), values
-
-    def create_neighbors(self, w: int, h: int, costs: list[int]) -> list[Cell]:
-        result: list[Cell] = []
-
-        for i in range(w * h):
-            row: int = i // w
-            col: int = i % w
-
-            cell: Cell = Cell(row, col, costs[i])
-
-            # Left
-            if col > 0:
-                cell.neighbor_ids.append(i - 1)
-            # Right
-            if col + 1 < w:
-                cell.neighbor_ids.append(i + 1)
-            # Up
-            if row > 0:
-                cell.neighbor_ids.append(i - w)
-            # Down
-            if row + 1 < h:
-                cell.neighbor_ids.append(i + w)
-
-            cell.neighbor_ids.sort(
-                key=lambda x: abs(cast(int, cell.value) - costs[x])
-            )
-
-            result.append(cell)
-
-        return result
-
-    def calc_avg_cost(self, cells: list[Cell], pairs: list[int | None]) -> float:
-        avg_cost = 0
-        for i in range(len(pairs)):
-            pair: int = cast(int, pairs[i])
-            if pair > i:
-                a: int = cast(int, cells[i].value)
-                b: int = cast(int, cells[pair].value)
-                avg_cost += abs(a - b)
-
-        return avg_cost / (len(cells) * .5)

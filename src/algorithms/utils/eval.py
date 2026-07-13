@@ -14,8 +14,9 @@ solvers: list[JAlgorithmBase] = [
     GuidedJDFSSolver(absdiff),
 ]
 
-board_gen: BoardGenerator = BoardGenerator(config.board_sizes)
-board_gen.generate(config.costs_range, config.sample_multiplier)
+board_gen: BoardGenerator = BoardGenerator()
+board_gen.generate(config.board_sizes, config.costs_range,
+                   config.sample_multiplier)
 
 for board, dims in board_gen:
     neighbors: Neighbors = create_neighbors(dims, board, absdiff)

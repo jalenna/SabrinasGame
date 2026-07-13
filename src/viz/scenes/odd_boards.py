@@ -1,7 +1,13 @@
 from manim import *
+from random import seed as rand_seed
+from typing import Any, Generator, cast
 from manim_slides.slide import ThreeDSlide
-from viz.utils.tile import Tile
-from typing import cast
+from src.viz.utils.trackers import JSlideNumberTracker
+from src.algorithms.utils.core import is_valid_board_size
+from src.algorithms.utils.types import ExplicitDims, iVec2D
+from src.viz.utils.algorithms.primitive import PrimitiveSolver
+from src.viz.utils.visual import create_tiles, reset_slide, show_slide_number
+from src.viz.utils.algorithms.utils.board_generator import VizBoardGenerator
 
 config["max_files_cached"] = -1
 
@@ -9,9 +15,17 @@ config["max_files_cached"] = -1
 class OddBoardsSlide(ThreeDSlide):
     skip_reversing = True
 
-    boards: list[VGroup] = []
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.slide_tracker: JSlideNumberTracker = JSlideNumberTracker(3)
+        self.current_slide_number: Text = Text(
+            str(self.slide_tracker.current), font_size=32).to_edge(DR)
+        self.primitive_solver: PrimitiveSolver = PrimitiveSolver()
+        self.color_gen: RandomColorGenerator = RandomColorGenerator(42)
 
     def construct(self) -> None:
+        rand_seed(42)
+
         self.monkey()
         self.analysis()
         self.reason()
@@ -20,12 +34,20 @@ class OddBoardsSlide(ThreeDSlide):
     def psuedo(self) -> None:
         self.set_camera_orientation(phi=0, theta=-90 * DEGREES, zoom=.5)
 
-        board: Rectangle = self.create_board(8, 9)
+        tile_offset: Vector = Vector((-20., 0., 0.))
 
-        slide_number: Text = Text("7/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(Write(slide_number))
+        board_generator: VizBoardGenerator = VizBoardGenerator()
+        dim: iVec2D = iVec2D(8, 9)
+        board_generator.generate(ExplicitDims([dim]), (1, 10))
+        board: Rectangle = board_generator.viz_boards[0]
 
-        self.play(Create(board))
+        tiles: list[Rectangle] = create_tiles(
+            (dim.x * dim.y) // 2, tile_offset, self.color_gen)
+
+        self.slide_tracker.inc()
+        show_slide_number(self)
+
+        self.play(Create(board, run_time=2, lag_ratio=.1))
         self.play(board.animate.shift(LEFT * 3))
 
         code_text: str = """
@@ -44,15 +66,11 @@ class OddBoardsSlide(ThreeDSlide):
         self.play(ReplacementTransform(code, t_code))
         code = t_code
 
-        row = 0
-        w, h = 8, 9
-        col = 0
-        while col < w:
-            a, b = (1, 2)
-            x, y, _ = board.get_corner(UL) + (.5, -1, 0.)
-            tile = Tile(a, b, x + col, y - row, 0.)
-            self.play(FadeIn(tile.visual, run_time=.2))
-            col += 1
+        solution_generator: Generator[list[Animation], None,
+                                      None] = self.primitive_solver.solve(dim, board, tiles)
+
+        solved_row: list[Animation] = next(solution_generator)
+        self.play(*solved_row)
 
         code_text = """
         Tile from left to right
@@ -63,14 +81,8 @@ class OddBoardsSlide(ThreeDSlide):
         self.play(ReplacementTransform(code, t_code))
         code = t_code
 
-        row += 2
-        col = 0
-        while col < w:
-            a, b = (1, 2)
-            x, y, _ = board.get_corner(UL) + (.5, -1, 0.)
-            tile = Tile(a, b, x + col, y - row, 0.)
-            self.play(FadeIn(tile.visual, run_time=.2))
-            col += 1
+        solved_row: list[Animation] = next(solution_generator)
+        self.play(*solved_row)
 
         code_text = """
         While board not filled:
@@ -78,50 +90,34 @@ class OddBoardsSlide(ThreeDSlide):
             Row += 2
         """
         t_code = Code(code_string=code_text).move_to(
-            board.get_right() + 5).shift(DOWN * 2)
+            board.get_right() + 5).shift(DOWN * 3)
         self.play(ReplacementTransform(code, t_code))
         code = t_code
 
-        row += 2
-        col = 0
-        while row != h:
-            if row + 1 == h:
-                break
-            col = 0
-            while col < w:
-                a, b = (1, 2)
-                x, y, _ = board.get_corner(UL) + (.5, -1, 0.)
-                tile = Tile(a, b, x + col, y - row, 0.)
-                self.play(FadeIn(tile.visual, run_time=.2))
-                col += 1
-            row += 2
+        for _ in range(2):
+            solved_row: list[Animation] = next(solution_generator)
+            self.play(*solved_row)
 
         code_text = """
         While board not filled:
             If tile can't fit:
-			    Rotate(Tile, 90 degrees)
+        		    Rotate(Tile, 90 degrees)
 
             Tile from left to right
             Row += 2
         """
         t_code = Code(code_string=code_text).move_to(
-            board.get_right() + 5).shift(DOWN * 2)
+            board.get_right() + 5).shift(DOWN * 3)
         self.play(ReplacementTransform(code, t_code))
         code = t_code
 
-        col = 0
-        row -= 1
-        while col < w:
-            x, y, _ = board.get_corner(UL) + (1., -1.5, 0.)
-            a, b = (2, 1)
-            if col + 1 == w:
-                self.play(
-                    Blink(Cross(Square(1).scale(.5)).move_to((x + col - .5, y - row, 0.))))
-                break
+        solved_row: list[Animation] = [
+            animation for animations in solution_generator for animation in animations]
+        self.play(*solved_row)
 
-            tile = Tile(a, b, x + col, y - row, 0.)
-            self.play(FadeIn(tile.visual, run_time=.2))
-            col += 2
+        self.wait(2)
+
+        reset_slide(self)
 
     def reason(self) -> None:
         boards = [
@@ -143,8 +139,8 @@ class OddBoardsSlide(ThreeDSlide):
 
         self.move_camera(phi=0, theta=-90 * DEGREES)
 
-        slide_number: Text = Text("6/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(Write(slide_number))
+        self.slide_tracker.inc()
+        show_slide_number(self)
 
         self.play(grouped.animate.arrange())
         self.move_camera(frame_center=grouped)
@@ -157,54 +153,31 @@ class OddBoardsSlide(ThreeDSlide):
         self.play(grouped.animate.arrange())
         self.move_camera(frame_center=grouped)
 
-        for i in range(1, len(boards)):
-            self.move_camera(frame_center=boards[i])
-            self.primitive_tile(i + 1, i + 1, cast(Rectangle, boards[i][0]))
+        tile_offset: Vector = Vector((0., 10., 0.))
+
+        for i, board_group in enumerate(boards):
+            board: Rectangle = cast(Rectangle, board_group[0])
+            self.move_camera(frame_center=board)
+            w, h = i + 1, i + 1
+            tiles: list[Rectangle] = create_tiles(
+                (w * h) // 2, tile_offset, self.color_gen)
+            animations: list[Animation] = [animation for animations in self.primitive_solver.solve(
+                iVec2D(w, h), board, tiles) for animation in animations]
+
+            if animations:
+                self.play(LaggedStart(*animations))
+
+            if not is_valid_board_size(iVec2D(w, h)):
+                x, y, _ = board.get_corner(DR) + (-.5, .5, 0.)
+                self.play(
+                    Blink(Cross(Square(1).scale(.5)).move_to((x, y, 0)))
+                )
 
         self.move_camera(frame_center=grouped)
 
-        self.next_section()
+        self.next_slide()
 
-        self.fade_all_out()
-
-        self.wait()
-
-    def primitive_tile(self, w: int, h: int, board: Rectangle) -> list[Tile]:
-        tiles: list[Tile] = []
-
-        rotate = False
-        row = 0
-        while not rotate and row != h:
-            if row > h or row + 1 == h:
-                rotate = True
-                row -= 1
-            col = 0
-            while col < w:
-                a, b = (1, 2)
-                x, y, _ = board.get_corner(UL) + (.5, -1, 0.)
-                if rotate:
-                    a, b = (2, 1)
-                    x += .5
-                    y -= .5
-
-                    if col + 1 == w:
-                        self.play(
-                            Blink(Cross(Square(1).scale(.5)).move_to((x + col - .5, y - row, 0.))))
-                        break
-
-                tile = Tile(a, b, x + col, y - row, 0.)
-
-                tiles.append(tile)
-                self.play(FadeIn(tile.visual, run_time=.2))
-                board.add(tile.visual)
-
-                if rotate:
-                    col += 1
-                col += 1
-
-            row += 2
-
-        return tiles
+        reset_slide(self)
 
     def analysis(self) -> None:
         table: Table = Table(
@@ -226,37 +199,16 @@ class OddBoardsSlide(ThreeDSlide):
 
         self.play(FadeIn(table))
 
-        slide_number: Text = Text("5/24").move_to(DOWN * 7. + RIGHT * 13.)
+        self.slide_tracker.inc()
+        show_slide_number(self)
 
-        self.play(Write(slide_number))
+        self.next_slide()
 
-        self.next_section()
-
-        t_table: Table = Table(
-            [
-                [str(3 * 3), "FAIL"],
-                [str(5 * 5), "FAIL"],
-                [str(7 * 7), "FAIL"],
-                [str(9 * 9), "FAIL"],
-                [str(11 * 11), "FAIL"],
-                [str(13 * 13), "FAIL"],
-                [str(15 * 15), "FAIL"],
-                [str(17 * 17), "FAIL"],
-                ["...", "..."],
-            ],
-            col_labels=[Text("Grid Size"), Text("Passed")],
-            include_outer_lines=True,
-            line_config={"stroke_width": 1, "color": BLUE_A}
-        ).scale(.5)
-        self.play(
-            ReplacementTransform(table, t_table)
-        )
-        table = t_table
-
-        self.next_section()
-        self.play(FadeOut(table), FadeOut(slide_number))
+        reset_slide(self)
 
     def monkey(self) -> None:
+        show_slide_number(self, update=False)
+
         boards = [
             self.create_labelled_board(5, 5, BLUE_A),
             self.create_labelled_board(3, 3, BLUE_B).move_to((0., 0., 1.)),
@@ -269,18 +221,13 @@ class OddBoardsSlide(ThreeDSlide):
 
         self.move_camera(phi=0, theta=-90 * DEGREES, zoom=.5)
 
-        slide_number: Text = Text("3/24").move_to(DOWN * 7. + RIGHT * 13.)
-
-        self.play(Write(slide_number))
-
         self.play(
             boards[i].animate.move_to((i * 5, 0., 0.)) for i in range(len(boards))
         )
 
         self.next_slide()
-        t_slide_number: Text = Text("4/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(ReplacementTransform(slide_number, t_slide_number))
-        slide_number = t_slide_number
+        self.slide_tracker.inc()
+        show_slide_number(self)
 
         self.play(
             FadeOut(board) for board in boards
@@ -294,89 +241,53 @@ class OddBoardsSlide(ThreeDSlide):
 
         self.next_section()
 
-        self.play(FadeOut(passes_header), FadeOut(slide_number))
+        self.play(FadeOut(passes_header))
 
-        pass_fail_rows: list[VGroup] = []
+        dims: list[iVec2D] = [
+            iVec2D(6, 5),
+            iVec2D(5, 6),
+            iVec2D(6, 6),
+            iVec2D(6, 7),
+            iVec2D(7, 6),
+            iVec2D(7, 7),
+            iVec2D(7, 8),
+            iVec2D(8, 7),
+            iVec2D(8, 8),
+        ]
 
-        pass_fail_rows.append(self.create_pass_fail_row(boards, 6, 5, "PASS"))
-        self.play(FadeIn(pass_fail_rows[-1]))
-        self.move_camera(frame_center=pass_fail_rows[-1])
+        last_row: VGroup | None = None
+        for dim in dims:
+            valid: bool = is_valid_board_size(dim)
 
-        pass_fail_rows.append(self.create_pass_fail_row(boards, 5, 6, "PASS"))
-        bottom = pass_fail_rows[-2].get_bottom()
-        bottom[1] -= 3
-        pass_fail_rows[-1].move_to(bottom)
-        self.move_camera(frame_center=pass_fail_rows[-1], zoom=.6)
-        self.play(FadeIn(pass_fail_rows[-1], run_time=.3))
+            row: VGroup = self.create_pass_fail_row(
+                boards, *dim, "PASS" if valid else "FAIL")
 
-        pass_fail_rows.append(self.create_pass_fail_row(boards, 6, 6, "PASS"))
-        bottom = pass_fail_rows[-2].get_bottom()
-        bottom[1] -= 3
-        pass_fail_rows[-1].move_to(bottom)
-        self.move_camera(frame_center=pass_fail_rows[-1])
-        self.play(FadeIn(pass_fail_rows[-1], run_time=.3))
+            if last_row:
+                bottom = last_row.get_bottom()
+                bottom[1] -= 3
+                row.move_to(bottom)
 
-        pass_fail_rows.append(self.create_pass_fail_row(boards, 6, 7, "PASS"))
-        bottom = pass_fail_rows[-2].get_bottom()
-        bottom[1] -= 3
-        pass_fail_rows[-1].move_to(bottom)
-        self.move_camera(frame_center=pass_fail_rows[-1])
-        self.play(FadeIn(pass_fail_rows[-1], run_time=.3))
+            self.move_camera(frame_center=row)
+            self.play(FadeIn(row, run_time=.2))
 
-        pass_fail_rows.append(self.create_pass_fail_row(boards, 7, 6, "PASS"))
-        bottom = pass_fail_rows[-2].get_bottom()
-        bottom[1] -= 3
-        pass_fail_rows[-1].move_to(bottom)
-        self.move_camera(frame_center=pass_fail_rows[-1])
-        self.play(FadeIn(pass_fail_rows[-1], run_time=.3))
+            if not valid:
+                self.play(Circumscribe(row, color=RED_A))
 
-        pass_fail_rows.append(self.create_pass_fail_row(boards, 7, 7, "FAIL"))
-        bottom = pass_fail_rows[-2].get_bottom()
-        bottom[1] -= 3
-        pass_fail_rows[-1].move_to(bottom)
-        self.move_camera(frame_center=pass_fail_rows[-1], zoom=.5)
-        self.play(FadeIn(pass_fail_rows[-1], run_time=.3))
-        self.play(Circumscribe(pass_fail_rows[-1], color=RED_A))
-
-        pass_fail_rows.append(self.create_pass_fail_row(boards, 7, 8, "PASS"))
-        bottom = pass_fail_rows[-2].get_bottom()
-        bottom[1] -= 3
-        pass_fail_rows[-1].move_to(bottom)
-        self.move_camera(frame_center=pass_fail_rows[-1])
-        self.play(FadeIn(pass_fail_rows[-1], run_time=.2))
-
-        pass_fail_rows.append(self.create_pass_fail_row(boards, 8, 7, "PASS"))
-        bottom = pass_fail_rows[-2].get_bottom()
-        bottom[1] -= 3
-        pass_fail_rows[-1].move_to(bottom)
-        self.move_camera(frame_center=pass_fail_rows[-1])
-        self.play(FadeIn(pass_fail_rows[-1], run_time=.2))
-
-        pass_fail_rows.append(self.create_pass_fail_row(boards, 8, 8, "PASS"))
-        bottom = pass_fail_rows[-2].get_bottom()
-        bottom[1] -= 3
-        pass_fail_rows[-1].move_to(bottom)
-        self.move_camera(frame_center=pass_fail_rows[-1])
-        self.play(FadeIn(pass_fail_rows[-1], run_time=.2))
+            last_row = row
 
         text = Text("...").scale(2)
-        bottom = pass_fail_rows[-2].get_bottom()
-        bottom[1] -= 10
-        text.move_to(bottom)
+        if last_row:
+            bottom = last_row.get_bottom()
+            bottom[1] -= 10
+            text.move_to(bottom)
         self.move_camera(frame_center=text)
+
         for _ in range(3):
             self.play(ApplyWave(text))
 
-        self.fade_all_out()
+        reset_slide(self)
 
-        self.move_camera(frame_center=(0., 0., 0.))
-
-        self.wait()
-
-    def fade_all_out(self, run_time=.2) -> None:
-        self.play(
-            *[FadeOut(mob, run_time=run_time)for mob in self.mobjects]
-        )
+        self.next_slide()
 
     def create_pass_fail_row(self, boards: list[VGroup], w: int, h: int, state: str) -> VGroup:
         boards.append(self.create_labelled_board(w, h, BLUE_B).scale(.5))

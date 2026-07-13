@@ -1,7 +1,7 @@
-from src.algorithms.utils.types import VariableDims
+from src.algorithms.utils.types import RoundRobinDims
 
 
-board_sizes: VariableDims = (
+board_sizes: RoundRobinDims = RoundRobinDims(
     [4, 6, 8],
     [4, 6, 8]
 )

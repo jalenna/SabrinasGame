@@ -44,3 +44,7 @@ def calc_avg_cost(tiles: Tiles, pairs: Pairs) -> float:
 
 def absdiff(a: float, b: float) -> float:
     return abs(a - b)
+
+
+def is_valid_board_size(dim: iVec2D) -> bool:
+    return dim.x * dim.y % 2 == 0

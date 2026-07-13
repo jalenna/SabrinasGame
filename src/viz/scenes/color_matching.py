@@ -1,28 +1,45 @@
 from manim import *
+from typing import Any, cast
+from random import seed as rand_seed
 from manim_slides.slide import ThreeDSlide
-from viz.utils.tile import Cell
-from typing import cast
+from src.viz.utils.trackers import JSlideNumberTracker
+from src.viz.utils.visual import reset_slide, show_slide_number
+from src.algorithms.utils.types import Tiles, iVec2D, ExplicitDims
+from src.viz.utils.algorithms.linear_greedy import LinearGreedySolver
+from src.viz.utils.algorithms.utils.board_generator import VizBoardGenerator
+
 config["max_files_cached"] = -1
 
 
 class ColorMatching(ThreeDSlide):
     skip_reversing = True
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.color_gen: RandomColorGenerator = RandomColorGenerator(
+            42, sample_colors=[RED_A, RED_C, RED_E, BLUE_C, BLUE_D, BLUE_E])
+        self.board_generator: VizBoardGenerator = VizBoardGenerator()
+        self.slide_tracker: JSlideNumberTracker = JSlideNumberTracker()
+        self.current_slide_number: Text = Text(
+            str(self.slide_tracker.current), font_size=32).to_edge(DR)
+        self.linear_greedy_solver: LinearGreedySolver = LinearGreedySolver(
+            self.color_gen)
+
     def construct(self) -> None:
+        rand_seed(42)
+
         self.intro()
         self.algorithm()
 
     def algorithm(self) -> None:
-        w: int = 4
-        h: int = 5
-        board: VGroup = self.create_board(w, h)
-        cells: list[Cell] = self.create_neighbors(w, h, board)
-        pairs: list[int | None] = [None for _ in range(w * h)]
+
+        dim: iVec2D = iVec2D(4, 5)
+        board: VGroup = self.create_board(dim)
 
         self.set_camera_orientation(zoom=.5)
 
-        slide_number: Text = Text("11/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(Write(slide_number))
+        self.slide_tracker.inc()
+        show_slide_number(self)
 
         code: Code = Code(
             code_string="# Your code here",
@@ -33,6 +50,11 @@ class ColorMatching(ThreeDSlide):
             Create(board.shift(LEFT * 5)),
             FadeIn(code.shift(RIGHT * 5))
         )
+
+        lines: list[Line] = self.linear_greedy_solver.solve(dim,
+                                                            board, self.board_generator.boards[-1][0])
+
+        self.wait(2)
 
         t_code: Code = Code(
             code_string="""
@@ -45,13 +67,13 @@ class ColorMatching(ThreeDSlide):
         self.play(ReplacementTransform(code, t_code))
         code = t_code
 
-        self.next_section()
+        self.wait(2)
 
         t_code = Code(
             code_string="""
             For every unpaired cell in board:
                 sort neighbors by ABS DIFF
-                
+
                 if neighbor not matched:
                     Match(cell, neighbor)
             """,
@@ -59,118 +81,70 @@ class ColorMatching(ThreeDSlide):
         self.play(ReplacementTransform(code, t_code))
         code = t_code
 
-        self.next_section()
-
-        self.greedy_tile(cells, pairs, board)
+        self.play(LaggedStart(*(FadeIn(line) for line in lines), run_time=3))
 
         self.next_section()
 
-        self.fade_all_out()
+        self.play(FadeOut(*lines, code))
 
-        t_slide_number: Text = Text("12/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(ReplacementTransform(slide_number, t_slide_number))
-        slide_number = t_slide_number
-
-        w = 6
-        h = 6
-        t_board: VGroup = self.create_board(w, h)
-        cells = self.create_neighbors(w, h, t_board)
-        pairs = [None for _ in range(w * h)]
-
-        self.play(ReplacementTransform(board, t_board))
-        board = t_board
-
-        lines: list[Line] = self.greedy_tile(cells, pairs, board)
-
-        self.next_section()
-
-        seq = [FadeOut(line) for line in lines]
-        self.play(Succession(*seq, run_time=1))
-
-        w = 8
-        h = 8
-        t_board = self.create_board(w, h)
-        cells = self.create_neighbors(w, h, t_board)
-        pairs = [None for _ in range(w * h)]
+        self.slide_tracker.inc()
+        show_slide_number(self)
 
         self.move_camera(zoom=.2)
-        self.play(ReplacementTransform(board, t_board))
-        board = t_board
 
-        lines = self.greedy_tile(cells, pairs, board)
+        for i in range(6, 12, 2):
+            dim = iVec2D(i, i)
+            t_board: VGroup = self.create_board(dim)
 
-        self.next_section()
+            self.play(ReplacementTransform(board, t_board))
+            board = t_board
 
-        seq = [FadeOut(line) for line in lines]
-        self.play(Succession(*seq, run_time=1))
+            lines = self.linear_greedy_solver.solve(dim,
+                                                    board, self.board_generator.boards[-1][0])
+            self.play(LaggedStart(*(FadeIn(line) for line in lines)))
 
-        w = 10
-        h = 10
-        t_board = self.create_board(w, h)
-        cells = self.create_neighbors(w, h, t_board)
-        pairs = [None for _ in range(w * h)]
+            self.wait(1)
 
-        self.play(ReplacementTransform(board, t_board))
-        board = t_board
-
-        lines = self.greedy_tile(cells, pairs, board)
+            if i != 10:
+                self.play(FadeOut(*lines))
 
         self.next_slide()
-        t_slide_number: Text = Text("13/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(ReplacementTransform(slide_number, t_slide_number))
-        slide_number = t_slide_number
-
-        avg_cost: int = self.calc_avg_cost(board, cast(list[int], pairs))
+        self.slide_tracker.inc()
+        show_slide_number(self)
 
         score_text: Text = Text(
             f"Avg ABS DIFF: ").move_to(board.get_center()).shift(UP * 15)
-        score_color: Square = Square(fill_opacity=1., color=BLACK, stroke_color=BLACK).shift(UP * 13).animate.set_color(
-            ManimColor(avg_cost))
 
         self.play(Create(score_text))
-        self.play(score_color)
-
-    def calc_avg_cost(self, board: VGroup, pairs: list[int]) -> int:
-        avg_cost = 0
-        for i in range(len(pairs)):
-            if cast(int, pairs[i]) > i:
-                a = board[i].get_color().to_integer()
-                b = board[pairs[i]].get_color().to_integer()
-
-                avg_cost += abs(a - b)
-        return round(avg_cost / (len(board) * .5)
-                     )
-
-    def fade_all_out(self, run_time=.2) -> None:
-        self.play(
-            *[FadeOut(mob, run_time=run_time)for mob in self.mobjects]
-        )
 
     def intro(self) -> None:
         title: Text = Text("\"Close Enough\" Matching")
 
-        slide_number: Text = Text("8/24").move_to(DOWN * 7. + RIGHT * 13.)
-
-        self.play(FadeIn(title), Write(slide_number))
+        self.play(FadeIn(title))
+        show_slide_number(self)
 
         self.next_slide()
-        t_slide_number: Text = Text("9/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(ReplacementTransform(slide_number, t_slide_number))
-        slide_number = t_slide_number
+        self.slide_tracker.inc()
+        show_slide_number(self)
 
         self.play(FadeOut(title))
 
         self.set_camera_orientation(phi=0, theta=-90 * DEGREES, zoom=.5)
 
-        board: VGroup = self.create_board(5, 5)
+        dim: iVec2D = iVec2D(5, 5)
+        board: VGroup = self.create_board(dim)
 
         self.play(Create(board, run_time=2))
 
         self.next_section()
 
-        curr_col: int = cast(ManimColor, board[0].color).to_integer()
-        curr_next: int = cast(ManimColor, board[1].color).to_integer()
-        curr_bot: int = cast(ManimColor, board[5].color).to_integer()
+        generated_board: Tiles = self.board_generator.boards[-1][0]
+        curr_col: int = cast(
+            ManimColor, self.color_gen.colors[int(generated_board[0])]).to_integer()
+        curr_next: int = cast(
+            ManimColor, self.color_gen.colors[int(generated_board[1])]).to_integer()
+        curr_bot: int = cast(
+            ManimColor, self.color_gen.colors[int(generated_board[5])]).to_integer()
 
         if abs(curr_col - curr_next) < abs(curr_col - curr_bot):
             self.play(Circumscribe(
@@ -179,14 +153,13 @@ class ColorMatching(ThreeDSlide):
             self.play(Circumscribe(
                 VGroup(cast(Square, board[0]), cast(Square, board[5])), run_time=4))
 
-        t_slide_number: Text = Text("10/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(ReplacementTransform(slide_number, t_slide_number))
-        slide_number = t_slide_number
+        self.slide_tracker.inc()
+        show_slide_number(self)
 
         self.play(FadeOut(board))
 
         color_band: Line = Line(start=LEFT * 3, end=RIGHT * 3,
-                                fill_opacity=1).set_color(cast(ParsableManimColor, [BLUE_C, RED_E]))
+                                fill_opacity=1, stroke_width=10).set_color(cast(ParsableManimColor, [BLUE_C, RED_E]))
         self.play(Create(color_band))
 
         self.next_section()
@@ -194,72 +167,21 @@ class ColorMatching(ThreeDSlide):
         code: Code = Code(code_string="ABS(DIFF(A, B))",
                           add_line_numbers=False)
 
-        self.play(FadeIn(code))
+        self.play(FadeIn(code.shift(UP * 2)))
 
-        self.wait(2)
+        self.next_section()
 
-        self.play(
-            FadeOut(color_band),
-            FadeOut(code),
-            FadeOut(slide_number),
-        )
+        reset_slide(self)
 
-    def create_board(self, w: int, h: int) -> VGroup:
-        rng: RandomColorGenerator = RandomColorGenerator(seed=42,
-                                                         sample_colors=[RED_A, RED_C, RED_E, BLUE_C, BLUE_D, BLUE_E])
+    def create_board(self, dim: iVec2D) -> VGroup:
+        self.board_generator.generate(ExplicitDims(
+            [dim]), (0, len(self.color_gen.colors) - 1))
 
-        group: VGroup = VGroup(Square(fill_color=rng.next(), fill_opacity=1)
-                               for _ in range(w * h))
+        group: VGroup = VGroup()
+        for i in range(dim.x * dim.y):
+            square: Square = Square(fill_color=self.color_gen.colors[int(
+                self.board_generator.boards[-1][0][i])], fill_opacity=1.)
+            square.add(Text(str(i)).scale(.5))
+            group.add(square)
 
-        return group.arrange_in_grid(h, w, 0.)
-
-    def create_neighbors(self, w: int, h: int, board: VGroup) -> list[Cell]:
-        result: list[Cell] = []
-
-        for i in range(w * h):
-            row: int = i // w
-            col: int = i % w
-
-            cell: Cell = Cell(row, col, board[i].get_color())
-
-            # Left
-            if col > 0:
-                cell.neighbor_ids.append(i - 1)
-            # Right
-            if col + 1 < w:
-                cell.neighbor_ids.append(i + 1)
-            # Up
-            if row > 0:
-                cell.neighbor_ids.append(i - w)
-            # Down
-            if row + 1 < h:
-                cell.neighbor_ids.append(i + w)
-
-            cell.neighbor_ids.sort(
-                key=lambda x: abs(cast(ManimColor, cell.value).to_integer() - board[x].get_color().to_integer()))
-
-            result.append(cell)
-
-        return result
-
-    def greedy_tile(self, cells: list[Cell], pairs: list[int | None], board: VGroup) -> list[Line]:
-        lines: list[Line] = []
-
-        for i in range(len(cells)):
-            if pairs[i] is not None:
-                continue
-
-            for j in cells[i].neighbor_ids:
-                if pairs[j] is not None:
-                    continue
-
-                pairs[i] = j
-                pairs[j] = i
-                line: Line = Line(
-                    board[i].get_center(), board[j].get_center(), buff=0., color=BLACK)
-                lines.append(line)
-                break
-
-        self.play(Succession(*(FadeIn(line) for line in lines), run_time=2))
-
-        return lines
+        return group.arrange_in_grid(rows=dim.y, cols=dim.x, buff=0.)

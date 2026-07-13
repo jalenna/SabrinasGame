@@ -1,8 +1,7 @@
 from manim import *
+from random import seed as rand_seed
 from manim_slides.slide import ThreeDSlide
-from random import randrange, seed as rand_seed
-from viz.utils.tile import Cell
-from typing import cast
+
 config["max_files_cached"] = -1
 
 

@@ -6,8 +6,9 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from .board_generator import BoardMLTrainData
 
-board_dataset: BoardMLTrainData = BoardMLTrainData(config.board_sizes)
-board_dataset.generate(config.costs_range, config.sample_multiplier)
+board_dataset: BoardMLTrainData = BoardMLTrainData()
+board_dataset.generate(
+    config.board_sizes, config.costs_range, config.sample_multiplier)
 
 trainloader: DataLoader[BoardMLTrainData] = DataLoader(board_dataset)
 

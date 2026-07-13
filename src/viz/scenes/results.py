@@ -1,6 +1,7 @@
 from manim import *
-from manim_slides.slide import ThreeDSlide
 from random import seed as rand_seed
+from manim_slides.slide import ThreeDSlide
+
 config["max_files_cached"] = -1
 
 

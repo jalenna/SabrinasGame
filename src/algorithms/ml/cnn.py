@@ -8,7 +8,8 @@ import torch.nn.functional as F
 class CNN(nn.Module):
     def __init__(self, output_size: Optional[int] = None):
         super().__init__()
-        max_size: int = max(config.board_sizes[0]) * max(config.board_sizes[1])
+        w, h = config.board_sizes.max_dims()
+        max_size: int = w * h
 
         self.conv1 = nn.Conv2d(2, 32, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
