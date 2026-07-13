@@ -5,8 +5,8 @@ from manim_slides.slide import ThreeDSlide
 from src.viz.utils.trackers import JSlideNumberTracker
 from src.algorithms.utils.types import ExplicitDims, iVec2D
 from src.viz.utils.algorithms.primitive import PrimitiveSolver
-from src.viz.utils.visual import create_tiles, reset_slide, show_slide_number
 from src.viz.utils.algorithms.utils.board_generator import VizBoardGenerator
+from src.viz.utils.visual import create_tiles, reset_slide, show_slide_number
 
 config["max_files_cached"] = -1
 

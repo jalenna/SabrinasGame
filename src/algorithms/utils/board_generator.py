@@ -37,3 +37,6 @@ class BoardGenerator:
 
     def __getitem__(self, i: int) -> Board:
         return self.boards[i]
+
+    def __setitem__(self, i: int, value: Board):
+        self.boards[i] = value

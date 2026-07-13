@@ -1,53 +1,29 @@
-from typing import override
-from src.algorithms.base import JAlgorithmBase
-from src.algorithms.utils.types import Neighbors, Tiles, iVec2D
+from manim import BLACK, Line, VGroup
+from src.algorithms.dfs import JDFSSolver
+from src.algorithms.utils.core import absdiff, create_neighbors
+from src.algorithms.utils.types import Tiles, iVec2D, Neighbors
 
 
-class JDFSSolver(JAlgorithmBase):
-    def __init__(self, cost_func):
-        super().__init__(cost_func)
-        self._required_tiles: int = 0
-        self._curr_num_tiles: int = 0
-        self.neighbors: Neighbors = []
+class JDepthSolver:
+    def __init__(self) -> None:
+        self.cost_func = absdiff
+        self.solver: JDFSSolver = JDFSSolver(self.cost_func)
 
-    @override
-    def solve(self, tiles: Tiles, neighbors: Neighbors, dims: iVec2D) -> bool:
-        board_size: int = dims.x * dims.y
-        self._required_tiles = board_size // 2
-        self._curr_num_tiles = 0
-        self._pairs = [-1] * len(tiles)
-        self.neighbors = neighbors
-        return self._solve()
+    def solve(self, dim: iVec2D, tiles: Tiles, viz_board: VGroup) -> dict[tuple[int, int], Line]:
+        neighbors: Neighbors = create_neighbors(dim, tiles, self.cost_func)
+        self.solver.solve(tiles, neighbors, dim)
 
-    def _solve(self) -> bool:
-        if self._required_tiles == self._curr_num_tiles:
-            return True
+        lines: dict[tuple[int, int], Line] = {}
 
-        start: int = -1
-        for i, pair in enumerate(self._pairs):
-            if pair == -1:
-                start = i
-                break
+        for state in self.solver.history:
+            u, v = state.pair[0], state.pair[1]
+            key = (min(u, v), max(u, v))
 
-        if start == -1:
-            return False
+            if key not in lines:
+                lines[key] = Line(
+                    viz_board[u].get_center(),
+                    viz_board[v].get_center(),
+                    buff=0., color=BLACK
+                )
 
-        self.tracker.steps_forward += 1
-
-        for neighbor in self.neighbors[start]:
-            if self._pairs[neighbor] > -1:
-                continue
-
-            self._pairs[start] = neighbor
-            self._pairs[neighbor] = start
-            self._curr_num_tiles += 1
-
-            if self._solve():
-                return True
-
-            self._pairs[neighbor] = -1
-            self._pairs[start] = -1
-            self._curr_num_tiles -= 1
-            self.tracker.steps_backward += 1
-
-        return False
+        return lines

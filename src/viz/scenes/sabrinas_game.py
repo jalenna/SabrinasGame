@@ -1,6 +1,14 @@
 from manim import *
+from typing import Any
+from random import seed as rand_seed
 from manim_slides.slide import ThreeDSlide
-from random import randrange, seed as rand_seed
+from src.viz.utils.algorithms.dfs import JDepthSolver
+from src.viz.utils.trackers import JSlideNumberTracker
+from src.viz.utils.visual import reset_slide, show_slide_number
+from src.algorithms.utils.types import Tiles, iVec2D, ExplicitDims
+from src.viz.utils.algorithms.linear_greedy import LinearGreedySolver
+from src.algorithms.utils.core import calc_avg_cost, is_valid_board_size
+from src.viz.utils.algorithms.utils.board_generator import VizBoardGenerator
 
 config["max_files_cached"] = -1
 
@@ -8,32 +16,22 @@ config["max_files_cached"] = -1
 class SabrinasGame(ThreeDSlide):
     skip_reversing = True
 
-    _required_tiles: int = 0
-    _curr_num_tiles: int = 0
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.slide_tracker: JSlideNumberTracker = JSlideNumberTracker()
+        self.current_slide_number: Text = Text(
+            str(self.slide_tracker.current), font_size=32).to_edge(DR)
+        self.linear_greedy_solver: LinearGreedySolver = LinearGreedySolver()
+        self.depth_solver: JDepthSolver = JDepthSolver()
+        self.board_generator: VizBoardGenerator = VizBoardGenerator()
 
     def construct(self) -> None:
         rand_seed(42)
 
         self.intro()
-        self.next_section()
-        self.fade_all_out()
-
-        self.move_camera(zoom=1.)
         self.problem()
-        self.next_section()
-        self.fade_all_out()
-
-        self.move_camera(zoom=1.)
         self.psuedo()
-        self.next_section()
-        self.fade_all_out()
-
-        self.move_camera(zoom=1.)
         self.demo()
-        self.next_section()
-        self.fade_all_out()
-
-        self.move_camera(zoom=1.)
         self.complexity()
 
     def complexity(self) -> None:
@@ -49,9 +47,7 @@ class SabrinasGame(ThreeDSlide):
             code_string=code_str
         )
 
-        slide_number: Text = Text("20/24").move_to(DOWN * 7. + RIGHT * 13.)
-
-        self.play(Write(slide_number), Create(code, run_time=3))
+        show_slide_number(self)
 
         self.move_camera(zoom=.5)
 
@@ -62,10 +58,8 @@ class SabrinasGame(ThreeDSlide):
         self.play(Write(comp))
 
         self.next_slide()
-        t_slide_number: Text = Text("21/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(FadeOut(comp), ReplacementTransform(
-            slide_number, t_slide_number))
-        slide_number = t_slide_number
+        self.slide_tracker.inc()
+        show_slide_number(self)
 
         t_code: Code = Code(
             code_string="""
@@ -91,11 +85,11 @@ class SabrinasGame(ThreeDSlide):
 
         shift = DOWN
 
-        comp = comp.move_to(
+        comp = comp.animate.move_to(
             code.get_edge_center(DOWN)).shift(shift)
 
         self.play(code.animate.shift(UP))
-        self.play(Write(comp))
+        self.play(comp)
 
         self.next_section()
 
@@ -127,11 +121,10 @@ class SabrinasGame(ThreeDSlide):
         comp = t_comp
 
         self.next_section()
-        self.fade_all_out()
 
-        t_slide_number: Text = Text("22/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(ReplacementTransform(slide_number, t_slide_number))
-        slide_number = t_slide_number
+        reset_slide(self)
+        self.slide_tracker.inc()
+        show_slide_number(self)
 
         axis = Axes(
             x_range=[0, 30, 5],
@@ -182,71 +175,55 @@ class SabrinasGame(ThreeDSlide):
             Write(dfs_text),
         )
 
+        self.next_slide()
+        self.slide_tracker.inc()
+        reset_slide(self)
+
     def demo(self) -> None:
-        w: int = 6
-        h: int = 6
-        costs = [
-            1, 3,   5,  7, 2, 4,
-            2, 4,   8,  9, 5, 7,
-            3, 5,   8,  4, 8, 6,
-            6, 8,  10,  9, 1, 1,
-            5, 11, 15, 15, 9, 5,
-            1, 12, 18,  3, 2, 3,
+        dim: iVec2D = iVec2D(6, 6)
+        costs: list[float] = [
+            1., 3.,   5.,  7., 2., 4.,
+            2., 4.,   8.,  9., 5., 7.,
+            3., 5.,   8.,  4., 8., 6.,
+            6., 8.,  10.,  9., 1., 1.,
+            5., 11., 15., 15., 9., 5.,
+            1., 12., 18.,  3., 2., 3.,
         ]
-        self._required_tiles = (6 * 6) // 2
-        self._curr_num_tiles = 0
-        board, _ = self.create_board(w, h, costs)
-        pairs: list[int | None] = [None for _ in range(w * h)]
-        cells: list[Cell] = self.create_neighbors(w, h, costs)
+        cost_range: tuple[int, int] = (1, 21)
+        viz_board = self._create_board(dim, cost_range)
+        self.board_generator.boards[-1] = (costs, dim)
+        data_board: Tiles = self.board_generator.boards[-1][0]
 
-        slide_number: Text = Text("19/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(Write(slide_number), FadeIn(board))
+        show_slide_number(self)
 
-        history = []
-        self.dfs_solve(cells, pairs, history)
+        self.play(FadeIn(viz_board))
 
-        step_tracker = ValueTracker(0)
-        num_steps = len(history) - 1
+        lines: dict[tuple[int, int], Line] = self.depth_solver.solve(
+            dim, data_board, viz_board)
 
-        visible_lines = VGroup()
-        self.add(board, visible_lines)
+        for state in self.depth_solver.solver.history:
+            u, v = state.pair[0], state.pair[1]
+            key = (min(u, v), max(u, v))
+            line = lines[key]
 
-        def update_lines(mobject):
-            current_step = int(step_tracker.get_value())
-            current_pairs = history[current_step]
-
-            mobject.remove(*mobject.submobjects)
-
-            seen = set()
-            for start, neighbor in enumerate(current_pairs):
-                if neighbor is not None and (start, neighbor) not in seen:
-                    seen.add((start, neighbor))
-                    seen.add((neighbor, start))
-
-                    line = Line(
-                        board[start].get_center(),
-                        board[neighbor].get_center(),
-                        buff=MED_SMALL_BUFF,
-                        color=BLACK
-                    )
-                    mobject.add(line)
-
-        visible_lines.add_updater(update_lines)
-
-        self.play(
-            step_tracker.animate.set_value(num_steps),
-            run_time=10,
-            rate_func=linear
-        )
+            if state.added:
+                self.play(FadeIn(line, run_time=.2))
+            else:
+                self.play(FadeOut(line, run_time=.2))
 
         self.move_camera(zoom=.5)
 
-        avg_cost: float = self.calc_avg_cost(cells, pairs)
+        avg_cost: float = calc_avg_cost(
+            data_board, self.depth_solver.solver.pairs)
 
         score_text: Text = Text(
-            f"Avg ABS DIFF: {avg_cost}", font_size=24).move_to(board.get_edge_center(UP), aligned_edge=DOWN).shift(UP)
+            f"Avg ABS DIFF: {avg_cost}", font_size=24).move_to(viz_board.get_edge_center(UP), aligned_edge=DOWN).shift(UP)
 
         self.play(FadeIn(score_text))
+
+        self.next_slide()
+        self.slide_tracker.inc()
+        reset_slide(self)
 
     def psuedo(self) -> None:
         code_str: str = """
@@ -261,8 +238,7 @@ class SabrinasGame(ThreeDSlide):
             code_string=code_str
         )
 
-        slide_number: Text = Text("17/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(Write(slide_number))
+        show_slide_number(self)
 
         self.play(Create(code, run_time=3))
 
@@ -317,7 +293,8 @@ class SabrinasGame(ThreeDSlide):
         code = t_code
 
         self.next_slide()
-        t_slide_number: Text = Text("18/24").move_to(DOWN * 7. + RIGHT * 13.)
+        self.slide_tracker.inc()
+        show_slide_number(self)
 
         t_code: Code = Code(
             code_string="""
@@ -332,9 +309,6 @@ class SabrinasGame(ThreeDSlide):
                         UnMatch(cell, neighbor)
             """,
         )
-        self.play(ReplacementTransform(code, t_code),
-                  ReplacementTransform(slide_number, t_slide_number))
-        slide_number = t_slide_number
 
         code = t_code
 
@@ -381,64 +355,74 @@ class SabrinasGame(ThreeDSlide):
         self.play(ReplacementTransform(code, t_code))
         code = t_code
 
-    def problem(self) -> None:
-        w: int = 6
-        h: int = 6
-        board, costs = self.create_board(w, h)
-        pairs: list[int | None] = [None for _ in range(w * h)]
-        cells: list[Cell] = self.create_neighbors(w, h, costs)
+        self.next_slide()
+        self.slide_tracker.inc()
+        reset_slide(self)
 
-        slide_number: Text = Text("15/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(Write(slide_number), FadeIn(board))
+    def problem(self) -> None:
+        dim: iVec2D = iVec2D(6, 6)
+
+        cost_range: tuple[int, int] = (1, 21)
+        viz_board: VGroup = self._create_board(dim, cost_range)
+        data_board: Tiles = self.board_generator.boards[-1][0]
+
+        self.play(FadeIn(viz_board))
+
+        show_slide_number(self)
 
         self.next_section()
 
-        self.greedy_tile(cells, pairs, board)
+        lines = self.linear_greedy_solver.solve(dim, viz_board, data_board)
+        self.play(LaggedStart(*(FadeIn(line) for line in lines)))
 
         self.move_camera(zoom=.5)
 
-        avg_cost: float = self.calc_avg_cost(cells, pairs)
+        avg_cost: float = calc_avg_cost(
+            data_board, self.linear_greedy_solver.pairs)
 
         score_text: Text = Text(
-            f"Avg ABS DIFF: {avg_cost}", font_size=24).move_to(board.get_edge_center(UP), aligned_edge=DOWN).shift(UP)
+            f"Avg ABS DIFF: {avg_cost}", font_size=24).move_to(viz_board.get_edge_center(UP), aligned_edge=DOWN).shift(UP)
 
         self.play(FadeIn(score_text))
 
         self.next_slide()
-        t_slide_number: Text = Text("16/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(ReplacementTransform(slide_number, t_slide_number))
-        slide_number = t_slide_number
+        reset_slide(self)
 
-        self.fade_all_out()
+        self.slide_tracker.inc()
+        show_slide_number(self)
 
-        costs = [
-            1, 3,   5,  7, 2, 4,
-            2, 4,   8,  9, 5, 7,
-            3, 5,   8,  4, 8, 6,
-            6, 8,  10,  9, 1, 1,
-            5, 11, 15, 15, 9, 5,
-            1, 12, 18,  3, 2, 3,
+        costs: list[float] = [
+            1., 3.,   5.,  7., 2., 4.,
+            2., 4.,   8.,  9., 5., 7.,
+            3., 5.,   8.,  4., 8., 6.,
+            6., 8.,  10.,  9., 1., 1.,
+            5., 11., 15., 15., 9., 5.,
+            1., 12., 18.,  3., 2., 3.,
         ]
-        board, _ = self.create_board(w, h)
-        pairs = [None for _ in range(w * h)]
-        cells = self.create_neighbors(w, h, costs)
+        viz_board: VGroup = self._create_board(dim, cost_range)
+        self.board_generator.boards[-1] = (costs, dim)
+        data_board: Tiles = self.board_generator.boards[-1][0]
 
-        self.play(FadeIn(board))
+        self.play(FadeIn(viz_board))
 
-        self.greedy_tile(cells, pairs, board)
+        lines = self.linear_greedy_solver.solve(dim, viz_board, data_board)
+        self.play(LaggedStart(*(FadeIn(line) for line in lines)))
 
         self.play(
-            Circumscribe(board[30]),
-            Circumscribe(board[35]),
-            Blink(Cross(board[30]).scale(.5), blinks=3),
-            Blink(Cross(board[35]).scale(.5), blinks=3),
+            Circumscribe(viz_board[30]),
+            Circumscribe(viz_board[35]),
+            Blink(Cross(viz_board[30]).scale(.5), blinks=3),
+            Blink(Cross(viz_board[35]).scale(.5), blinks=3),
         )
+
+        self.next_slide()
+        self.slide_tracker.inc()
+        reset_slide(self)
 
     def intro(self) -> None:
         title: Text = Text("Sabrina's Game", font_size=64)
 
-        slide_number: Text = Text("14/24").move_to(DOWN * 7. + RIGHT * 13.)
-        self.play(Write(slide_number), FadeIn(title))
+        show_slide_number(self)
 
         self.play(title.animate.shift(UP))
 
@@ -449,7 +433,11 @@ class SabrinasGame(ThreeDSlide):
 
         self.play(rules.animate.arrange(DOWN, center=False))
 
-    def create_textbox(self, content: VMobject, color: ManimColor = WHITE, stroke_color: ManimColor = BLACK) -> VGroup:
+        self.next_slide()
+        self.slide_tracker.inc()
+        reset_slide(self)
+
+    def _create_textbox(self, content: VMobject, color: ManimColor = WHITE, stroke_color: ManimColor = BLACK) -> VGroup:
         result = VGroup()
         box = Rectangle(
             height=1, width=1, fill_color=color,
@@ -459,22 +447,17 @@ class SabrinasGame(ThreeDSlide):
         result.add(box, cont)
         return result
 
-    def create_board(self, w: int, h: int, values: list[int] = []) -> tuple[VGroup, list[int]]:
-        if values:
-            if w * h != len(values):
-                raise Exception("Board size and values size are not equal")
+    def _create_board(self, dim: iVec2D, rand_range: tuple[int, int]) -> VGroup:
+        if not is_valid_board_size(dim):
+            raise Exception("Board size and values size are not equal")
+
+        self.board_generator.generate(ExplicitDims([dim]), rand_range)
+        board: Tiles = self.board_generator.boards[-1][0]
 
         group: VGroup = VGroup()
 
-        if not values:
-            t_v: list[int] = []
-            for _ in range(w * h):
-                t_v.append(randrange(0, 20))
+        for tile in board:
+            group.add(self._create_textbox(
+                Text(str(int(tile)), color=BLACK, font_size=24)))
 
-            values = t_v
-
-        for v in values:
-            group.add(self.create_textbox(
-                Text(str(v), color=BLACK, font_size=24)))
-
-        return group.arrange_in_grid(h, w, 0.), values
+        return group.arrange_in_grid(dim.y, dim.x, 0.)
