@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sabrina"
+version = "1.0.0"
+description = "A container for all algorithms mentioned in the thesis."
+authors = [{ name = "Jalen Cyrus", email = "j.cyrus@student.vu.nl" }]
+requires-python = ">=3.13"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
