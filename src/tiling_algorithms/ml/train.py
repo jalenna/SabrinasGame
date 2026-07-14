@@ -1,10 +1,10 @@
 import torch
-from . import config
-from .cnn import CNN
 import torch.nn as nn
 import torch.optim as optim
+from tiling_algorithms.ml import config
 from torch.utils.data import DataLoader
-from .board_generator import BoardMLTrainData
+from tiling_algorithms.ml.cnn import CNN
+from tiling_algorithms.ml.board_generator import BoardMLTrainData
 
 
 for algorithm in config.algorithms:

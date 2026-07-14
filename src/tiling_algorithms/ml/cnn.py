@@ -1,8 +1,8 @@
 import torch
-from . import config
 import torch.nn as nn
 from typing import Optional
 import torch.nn.functional as F
+import tiling_algorithms.ml.config as config
 
 
 class CNN(nn.Module):

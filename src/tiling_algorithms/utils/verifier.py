@@ -1,6 +1,6 @@
 from typing import Optional
-from src.algorithms.base import Neighbors
-from src.algorithms.utils.types import Pairs, Tiles, iVec2D
+from tiling_algorithms.base import Neighbors
+from tiling_algorithms.utils.types import Pairs, Tiles, iVec2D
 
 
 class InvalidSolution(Exception):

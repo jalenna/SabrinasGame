@@ -1,19 +1,19 @@
 import csv
 import pandas as pd
-from . import config
 import seaborn as sns
 from typing import Any
 import matplotlib.pyplot as plt
-from .verifier import solution_verifier
-from src.algorithms.dfs import JDFSSolver
-from src.algorithms.mcmf import JMCMFSolver
-from .board_generator import BoardGenerator
-import src.algorithms.ml.config as ml_config
-from src.algorithms.base import JAlgorithmBase
-from src.algorithms.utils.types import Neighbors
-from src.algorithms.guided_dfs import JGuidedJDFSSolver
-from .core import absdiff, create_neighbors, calc_avg_cost
-from src.algorithms.utils.trackers import JAlgorithmStatsTracker
+from tiling_algorithms.utils import config
+from tiling_algorithms.dfs import JDFSSolver
+from tiling_algorithms.mcmf import JMCMFSolver
+import tiling_algorithms.ml.config as ml_config
+from tiling_algorithms.base import JAlgorithmBase
+from tiling_algorithms.utils.types import Neighbors
+from tiling_algorithms.guided_dfs import JGuidedJDFSSolver
+from tiling_algorithms.utils.verifier import solution_verifier
+from tiling_algorithms.utils.board_generator import BoardGenerator
+from tiling_algorithms.utils.trackers import JAlgorithmStatsTracker
+from tiling_algorithms.utils.core import absdiff, create_neighbors, calc_avg_cost
 
 
 def evaluate() -> None:

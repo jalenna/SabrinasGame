@@ -1,5 +1,5 @@
 from typing import Callable
-from src.algorithms.utils.types import Neighbors, Pairs, Tiles, iVec2D
+from tiling_algorithms.utils.types import Neighbors, Pairs, Tiles, iVec2D
 
 
 type CostFunc = Callable[[float, float], float]

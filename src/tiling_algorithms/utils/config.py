@@ -1,5 +1,5 @@
 from pathlib import Path
-from src.algorithms.utils.types import RoundRobinDims
+from tiling_algorithms.utils.types import RoundRobinDims
 
 results_save_path: Path = Path("data_out/results.csv")
 

@@ -1,6 +1,6 @@
+from typing import Any
 from time import perf_counter
 from dataclasses import asdict, dataclass
-from typing import Any
 
 
 @dataclass

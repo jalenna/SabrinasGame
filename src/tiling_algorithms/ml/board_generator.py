@@ -1,11 +1,11 @@
 import torch
-from . import config
 from random import randint
 from typing import override
 from torch.utils.data import Dataset
-from src.algorithms.base import JAlgorithmBase
-from src.algorithms.utils.core import absdiff, create_neighbors
-from src.algorithms.utils.types import ExplicitDims, Neighbors, RoundRobinDims, Tiles, VariableDims, Pairs, iVec2D
+from tiling_algorithms.ml import config
+from tiling_algorithms.base import JAlgorithmBase
+from tiling_algorithms.utils.core import absdiff, create_neighbors
+from tiling_algorithms.utils.types import ExplicitDims, Neighbors, RoundRobinDims, Tiles, VariableDims, Pairs, iVec2D
 
 
 class BoardMLTrainData(Dataset):

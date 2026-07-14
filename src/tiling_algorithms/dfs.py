@@ -1,6 +1,6 @@
 from typing import override
-from src.algorithms.base import JAlgorithmBase
-from src.algorithms.utils.types import Neighbors, Tiles, iVec2D, State
+from tiling_algorithms.base import JAlgorithmBase
+from tiling_algorithms.utils.types import Neighbors, Tiles, iVec2D, State
 
 
 class JDFSSolver(JAlgorithmBase):

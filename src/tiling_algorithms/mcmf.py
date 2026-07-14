@@ -1,7 +1,7 @@
 from typing import override
 from collections import defaultdict, deque
-from src.algorithms.base import JAlgorithmBase
-from src.algorithms.utils.types import Graph, Neighbors, Tiles, iVec2D, Edge
+from tiling_algorithms.base import JAlgorithmBase
+from tiling_algorithms.utils.types import Graph, Neighbors, Tiles, iVec2D, Edge
 
 
 class JMCMFSolver(JAlgorithmBase):

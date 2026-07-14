@@ -1,9 +1,9 @@
 import torch
 from pathlib import Path
 from typing import override
-from src.algorithms.ml.cnn import CNN
-from src.algorithms.base import JAlgorithmBase
-from src.algorithms.utils.types import Neighbors, State, Tiles, iVec2D
+from tiling_algorithms.ml.cnn import CNN
+from tiling_algorithms.base import JAlgorithmBase
+from tiling_algorithms.utils.types import Neighbors, State, Tiles, iVec2D
 
 
 class JGuidedJDFSSolver(JAlgorithmBase):

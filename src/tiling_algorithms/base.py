@@ -1,7 +1,7 @@
 from abc import abstractmethod
-from src.algorithms.utils.core import CostFunc
-from src.algorithms.utils.types import iVec2D, Tiles, Neighbors, Pairs
-from src.algorithms.utils.trackers import JAlgorithmStatsTracker, NoTracker
+from tiling_algorithms.utils.core import CostFunc
+from tiling_algorithms.utils.types import iVec2D, Tiles, Neighbors, Pairs
+from tiling_algorithms.utils.trackers import JAlgorithmStatsTracker, NoTracker
 
 
 class JAlgorithmBase:

@@ -1,5 +1,5 @@
 from random import randint
-from src.algorithms.utils.types import Boards, Board, ExplicitDims, RoundRobinDims, VariableDims, iVec2D
+from tiling_algorithms.utils.types import Boards, Board, ExplicitDims, RoundRobinDims, VariableDims, iVec2D
 
 
 class BoardGenerator:
