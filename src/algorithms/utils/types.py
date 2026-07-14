@@ -55,3 +55,9 @@ class Edge:
 
 
 type Graph = dict[int, list[Edge]]
+
+
+@dataclass
+class State:
+    added: bool
+    pair: iVec2D

@@ -1,13 +1,13 @@
 from manim import *
-from typing import Any
+from typing import Any, Optional
 from random import seed as rand_seed
 from manim_slides.slide import ThreeDSlide
 from src.viz.utils.algorithms.dfs import JDepthSolver
 from src.viz.utils.trackers import JSlideNumberTracker
 from src.viz.utils.visual import reset_slide, show_slide_number
-from src.algorithms.utils.types import Tiles, iVec2D, ExplicitDims
 from src.viz.utils.algorithms.linear_greedy import LinearGreedySolver
 from src.algorithms.utils.core import calc_avg_cost, is_valid_board_size
+from src.algorithms.utils.types import Board, Tiles, iVec2D, ExplicitDims
 from src.viz.utils.algorithms.utils.board_generator import VizBoardGenerator
 
 config["max_files_cached"] = -1
@@ -24,6 +24,18 @@ class SabrinasGame(ThreeDSlide):
         self.linear_greedy_solver: LinearGreedySolver = LinearGreedySolver()
         self.depth_solver: JDepthSolver = JDepthSolver()
         self.board_generator: VizBoardGenerator = VizBoardGenerator()
+
+        self.problematic_board: Board = (
+            [
+                1., 3.,   5.,  7., 2., 4.,
+                2., 4.,   8.,  9., 5., 7.,
+                3., 5.,   8.,  4., 8., 6.,
+                6., 8.,  10.,  9., 1., 1.,
+                5., 11., 15., 15., 9., 5.,
+                1., 12., 18.,  3., 2., 3.,
+            ],
+            iVec2D(6, 6)
+        )
 
     def construct(self) -> None:
         rand_seed(42)
@@ -85,11 +97,8 @@ class SabrinasGame(ThreeDSlide):
 
         shift = DOWN
 
-        comp = comp.animate.move_to(
-            code.get_edge_center(DOWN)).shift(shift)
-
-        self.play(code.animate.shift(UP))
-        self.play(comp)
+        self.play(code.animate.shift(UP), comp.animate.move_to(
+            code.get_edge_center(DOWN)).shift(shift))
 
         self.next_section()
 
@@ -180,19 +189,10 @@ class SabrinasGame(ThreeDSlide):
         reset_slide(self)
 
     def demo(self) -> None:
-        dim: iVec2D = iVec2D(6, 6)
-        costs: list[float] = [
-            1., 3.,   5.,  7., 2., 4.,
-            2., 4.,   8.,  9., 5., 7.,
-            3., 5.,   8.,  4., 8., 6.,
-            6., 8.,  10.,  9., 1., 1.,
-            5., 11., 15., 15., 9., 5.,
-            1., 12., 18.,  3., 2., 3.,
-        ]
+        data_board, dim = self.problematic_board
         cost_range: tuple[int, int] = (1, 21)
-        viz_board = self._create_board(dim, cost_range)
-        self.board_generator.boards[-1] = (costs, dim)
-        data_board: Tiles = self.board_generator.boards[-1][0]
+        viz_board = self._create_board(
+            dim, cost_range, data_board)
 
         show_slide_number(self)
 
@@ -391,16 +391,8 @@ class SabrinasGame(ThreeDSlide):
         self.slide_tracker.inc()
         show_slide_number(self)
 
-        costs: list[float] = [
-            1., 3.,   5.,  7., 2., 4.,
-            2., 4.,   8.,  9., 5., 7.,
-            3., 5.,   8.,  4., 8., 6.,
-            6., 8.,  10.,  9., 1., 1.,
-            5., 11., 15., 15., 9., 5.,
-            1., 12., 18.,  3., 2., 3.,
-        ]
-        viz_board: VGroup = self._create_board(dim, cost_range)
-        self.board_generator.boards[-1] = (costs, dim)
+        viz_board: VGroup = self._create_board(
+            self.problematic_board[1], cost_range, self.problematic_board[0])
         data_board: Tiles = self.board_generator.boards[-1][0]
 
         self.play(FadeIn(viz_board))
@@ -447,11 +439,14 @@ class SabrinasGame(ThreeDSlide):
         result.add(box, cont)
         return result
 
-    def _create_board(self, dim: iVec2D, rand_range: tuple[int, int]) -> VGroup:
+    def _create_board(self, dim: iVec2D, rand_range: tuple[int, int], existing_costs: Optional[Tiles] = None) -> VGroup:
         if not is_valid_board_size(dim):
             raise Exception("Board size and values size are not equal")
 
         self.board_generator.generate(ExplicitDims([dim]), rand_range)
+        if existing_costs:
+            self.board_generator.boards[-1] = (existing_costs, dim)
+
         board: Tiles = self.board_generator.boards[-1][0]
 
         group: VGroup = VGroup()

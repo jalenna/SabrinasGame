@@ -1,13 +1,6 @@
-from dataclasses import dataclass
 from typing import override
 from src.algorithms.base import JAlgorithmBase
-from src.algorithms.utils.types import Neighbors, Tiles, iVec2D
-
-
-@dataclass
-class State:
-    added: bool
-    pair: iVec2D
+from src.algorithms.utils.types import Neighbors, Tiles, iVec2D, State
 
 
 class JDFSSolver(JAlgorithmBase):
@@ -25,7 +18,12 @@ class JDFSSolver(JAlgorithmBase):
         self._curr_num_tiles = 0
         self._pairs = [-1] * len(tiles)
         self.neighbors = neighbors
-        return self._solve()
+
+        self.tracker.start_timer()
+        solved: bool = self._solve()
+        self.tracker.stop_timer()
+
+        return solved
 
     def _solve(self) -> bool:
         if self._required_tiles == self._curr_num_tiles:

@@ -3,7 +3,7 @@ from . import config
 from random import randint
 from typing import override
 from torch.utils.data import Dataset
-from src.algorithms.mcmf import JMCMFSolver
+from src.algorithms.base import JAlgorithmBase
 from src.algorithms.utils.core import absdiff, create_neighbors
 from src.algorithms.utils.types import ExplicitDims, Neighbors, RoundRobinDims, Tiles, VariableDims, Pairs, iVec2D
 
@@ -13,18 +13,17 @@ class BoardMLTrainData(Dataset):
         super().__init__()
         self.boards: list[torch.Tensor] = []
         self.solutions: list[torch.Tensor] = []
-        self._solver: JMCMFSolver = JMCMFSolver(absdiff)
 
-    def generate(self, dims: VariableDims, rand_range: tuple[int, int], extend_samples: int = 1) -> None:
+    def generate(self, dims: VariableDims, rand_range: tuple[int, int], solver: JAlgorithmBase, extend_samples: int = 1) -> None:
 
         if isinstance(dims, RoundRobinDims):
             self.rr_generator(dims,
-                              rand_range, extend_samples)
+                              rand_range, solver, extend_samples)
         elif isinstance(dims, ExplicitDims):
             self.ex_generator(dims,
-                              rand_range, extend_samples)
+                              rand_range, solver, extend_samples)
 
-    def rr_generator(self, dims: RoundRobinDims, rand_range: tuple[int, int], extend_samples: int = 1) -> None:
+    def rr_generator(self, dims: RoundRobinDims, rand_range: tuple[int, int], solver: JAlgorithmBase, extend_samples: int = 1) -> None:
         widths, heights = dims.widths, dims.heights
         widths *= extend_samples
         heights *= extend_samples
@@ -35,9 +34,9 @@ class BoardMLTrainData(Dataset):
                                 for _ in range(width * height)]
                 self.boards.append(torch.Tensor(board).view(1, height, width))
                 self.solutions.append(torch.Tensor(self._solve(
-                    board, iVec2D(width, height))))
+                    board, iVec2D(width, height), solver)))
 
-    def ex_generator(self, dims: ExplicitDims, rand_range: tuple[int, int], extend_samples: int = 1) -> None:
+    def ex_generator(self, dims: ExplicitDims, rand_range: tuple[int, int], solver: JAlgorithmBase, extend_samples: int = 1) -> None:
         complete_dims: list[tuple[int, int]] = dims.dims * extend_samples
 
         for width, height in complete_dims:
@@ -45,12 +44,12 @@ class BoardMLTrainData(Dataset):
                             for _ in range(width * height)]
             self.boards.append(torch.Tensor(board).view(1, height, width))
             self.solutions.append(torch.Tensor(self._solve(
-                board, iVec2D(width, height))))
+                board, iVec2D(width, height), solver)))
 
-    def _solve(self, board: Tiles, dims: iVec2D) -> Pairs:
+    def _solve(self, board: Tiles, dims: iVec2D, solver: JAlgorithmBase) -> Pairs:
         neighbors: Neighbors = create_neighbors(dims, board, absdiff)
-        self._solver(board, neighbors, dims)
-        return self._solver.pairs
+        solver.solve(board, neighbors, dims)
+        return solver.pairs
 
     def __len__(self):
         return len(self.boards)

@@ -13,6 +13,7 @@ class JMCMFSolver(JAlgorithmBase):
 
     @override
     def solve(self, tiles: Tiles, neighbors: Neighbors, dims: iVec2D) -> bool:
+        self.tracker.start_timer()
         self.source_idx = len(tiles)
         self.sink_idx = len(tiles) + 1
 
@@ -25,9 +26,11 @@ class JMCMFSolver(JAlgorithmBase):
             if distance[self.sink_idx] == float("inf"):
                 break
 
+            self.tracker.steps_forward += 1
             self._commit_construction(parent_node, parent_edge)
 
         self._reconstruct(tiles, dims)
+        self.tracker.stop_timer()
         return True
 
     def _spfa(self, tiles: Tiles) -> tuple[list[float], list[int], list[int]]:
