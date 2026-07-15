@@ -3,8 +3,8 @@ from typing import Any
 from random import seed as rand_seed
 from manim_slides.slide import ThreeDSlide
 from src.viz.utils.trackers import JSlideNumberTracker
-from src.algorithms.utils.types import ExplicitDims, iVec2D
 from src.viz.utils.algorithms.primitive import PrimitiveSolver
+from tiling_algorithms.utils.types import ExplicitDims, iVec2D
 from src.viz.utils.algorithms.utils.board_generator import VizBoardGenerator
 from src.viz.utils.visual import create_tiles, reset_slide, show_slide_number
 
@@ -84,7 +84,7 @@ class IntroSlide(ThreeDSlide):
 
     def tile(self) -> None:
         self.slide_tracker.inc()
-        show_slide_number(self)
+        show_slide_number(self, update=False)
         self.move_camera(phi=0, theta=-90 * DEGREES,
                          frame_center=(0., 0., 0.), zoom=.5)
 

@@ -1,5 +1,4 @@
 from random import random
-
 from manim_slides.slide import Slide
 from manim import DR, FadeIn, FadeOut, Rectangle, Text, Vector, RandomColorGenerator
 
@@ -10,9 +9,18 @@ def reset_slide(slide: Slide) -> None:
 
 
 def fade_all_out(slide: Slide, run_time: float = .2) -> None:
-    slide.play(
-        *[FadeOut(mob, run_time=run_time)for mob in slide.mobjects]
-    )
+    mobs_to_fade = [
+        mob for mob in slide.mobjects
+        if mob is not getattr(slide, 'current_slide_number', None)
+    ]
+
+    if mobs_to_fade:
+        slide.play(
+            *[FadeOut(mob, run_time=run_time) for mob in mobs_to_fade]
+        )
+    # slide.play(
+    #     *[FadeOut(mob, run_time=run_time) for mob in slide.mobjects]
+    # )
 
 
 def show_slide_number(slide: Slide, update: bool = True) -> None:

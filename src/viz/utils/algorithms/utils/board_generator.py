@@ -1,7 +1,7 @@
-from typing import Any, override
+from typing import override
 from manim import BLUE_D, Rectangle
-from src.algorithms.utils.types import ExplicitDims, VariableDims
-from src.algorithms.utils.board_generator import BoardGenerator
+from tiling_algorithms.utils.types import VariableDims
+from tiling_algorithms.utils.board_generator import BoardGenerator
 
 
 class VizBoardGenerator(BoardGenerator):

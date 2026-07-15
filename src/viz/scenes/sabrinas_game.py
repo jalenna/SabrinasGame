@@ -6,8 +6,8 @@ from src.viz.utils.algorithms.dfs import JDepthSolver
 from src.viz.utils.trackers import JSlideNumberTracker
 from src.viz.utils.visual import reset_slide, show_slide_number
 from src.viz.utils.algorithms.linear_greedy import LinearGreedySolver
-from src.algorithms.utils.core import calc_avg_cost, is_valid_board_size
-from src.algorithms.utils.types import Board, Tiles, iVec2D, ExplicitDims
+from tiling_algorithms.utils.core import calc_avg_cost, is_valid_board_size
+from tiling_algorithms.utils.types import Board, Tiles, iVec2D, ExplicitDims
 from src.viz.utils.algorithms.utils.board_generator import VizBoardGenerator
 
 config["max_files_cached"] = -1
@@ -18,7 +18,7 @@ class SabrinasGame(ThreeDSlide):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        self.slide_tracker: JSlideNumberTracker = JSlideNumberTracker()
+        self.slide_tracker: JSlideNumberTracker = JSlideNumberTracker(14)
         self.current_slide_number: Text = Text(
             str(self.slide_tracker.current), font_size=32).to_edge(DR)
         self.linear_greedy_solver: LinearGreedySolver = LinearGreedySolver()
@@ -183,10 +183,6 @@ class SabrinasGame(ThreeDSlide):
             Create(dfs_graph),
             Write(dfs_text),
         )
-
-        self.next_slide()
-        self.slide_tracker.inc()
-        reset_slide(self)
 
     def demo(self) -> None:
         data_board, dim = self.problematic_board
@@ -414,7 +410,7 @@ class SabrinasGame(ThreeDSlide):
     def intro(self) -> None:
         title: Text = Text("Sabrina's Game", font_size=64)
 
-        show_slide_number(self)
+        show_slide_number(self, update=False)
 
         self.play(title.animate.shift(UP))
 

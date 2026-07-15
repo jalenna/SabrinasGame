@@ -4,8 +4,8 @@ from random import seed as rand_seed
 from manim_slides.slide import ThreeDSlide
 from src.viz.utils.trackers import JSlideNumberTracker
 from src.viz.utils.visual import reset_slide, show_slide_number
-from src.algorithms.utils.types import Tiles, iVec2D, ExplicitDims
 from src.viz.utils.algorithms.linear_greedy import LinearGreedySolver
+from tiling_algorithms.utils.types import Tiles, iVec2D, ExplicitDims
 from src.viz.utils.algorithms.utils.board_generator import VizBoardGenerator
 
 config["max_files_cached"] = -1
@@ -19,7 +19,7 @@ class ColorMatching(ThreeDSlide):
         self.color_gen: RandomColorGenerator = RandomColorGenerator(
             42, sample_colors=[RED_A, RED_C, RED_E, BLUE_C, BLUE_D, BLUE_E])
         self.board_generator: VizBoardGenerator = VizBoardGenerator()
-        self.slide_tracker: JSlideNumberTracker = JSlideNumberTracker()
+        self.slide_tracker: JSlideNumberTracker = JSlideNumberTracker(8)
         self.current_slide_number: Text = Text(
             str(self.slide_tracker.current), font_size=32).to_edge(DR)
         self.linear_greedy_solver: LinearGreedySolver = LinearGreedySolver(
@@ -121,7 +121,7 @@ class ColorMatching(ThreeDSlide):
         title: Text = Text("\"Close Enough\" Matching")
 
         self.play(FadeIn(title))
-        show_slide_number(self)
+        show_slide_number(self, update=False)
 
         self.next_slide()
         self.slide_tracker.inc()

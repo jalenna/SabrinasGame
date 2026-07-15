@@ -1,5 +1,5 @@
 from typing import Generator, cast
-from src.algorithms.utils.types import iVec2D
+from tiling_algorithms.utils.types import iVec2D
 from manim import PI, UL, Animation, Mobject, Rectangle
 
 

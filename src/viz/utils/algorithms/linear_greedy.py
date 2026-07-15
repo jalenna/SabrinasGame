@@ -1,7 +1,7 @@
-from typing import Generator, cast
+from typing import cast
 from manim import BLACK, Line, Mobject, RandomColorGenerator
-from src.algorithms.utils.core import absdiff, create_neighbors
-from src.algorithms.utils.types import Neighbors, Pairs, Tiles, iVec2D
+from tiling_algorithms.utils.core import absdiff, create_neighbors
+from tiling_algorithms.utils.types import Neighbors, Pairs, Tiles, iVec2D
 
 
 class LinearGreedySolver:
