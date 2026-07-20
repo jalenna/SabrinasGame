@@ -1,10 +1,11 @@
+import torch
+from manim import *
 from pathlib import Path
-from manim import BLACK, Cross, Line, Square, VGroup
 from tiling_algorithms.dfs import JDFSSolver
+import tiling_algorithms.ml.config as ml_config
 from tiling_algorithms.guided_dfs import JGuidedJDFSSolver
 from tiling_algorithms.utils.core import absdiff, create_neighbors
 from tiling_algorithms.utils.types import Tiles, iVec2D, Neighbors
-import torch
 
 
 class JDepthSolver:
@@ -26,14 +27,18 @@ class JDepthSolver:
                 lines[key] = Line(
                     viz_board[u].get_center(),
                     viz_board[v].get_center(),
-                    buff=0., color=BLACK
+                    buff=0., color=YELLOW
                 )
 
         return lines
 
+    def clear(self) -> None:
+        self.solver._pairs = []
+        self.solver.history = []
+
 
 class JGuidedDepthSolver:
-    def __init__(self, model_path: Path) -> None:
+    def __init__(self, model_path: Path = ml_config.save_path / "JDFSSolver.pt") -> None:
         self.cost_func = absdiff
         self.solver: JGuidedJDFSSolver = JGuidedJDFSSolver(
             self.cost_func, model_path)
@@ -52,7 +57,7 @@ class JGuidedDepthSolver:
                 lines[key] = Line(
                     viz_board[u].get_center(),
                     viz_board[v].get_center(),
-                    buff=0., color=BLACK
+                    buff=0., color=YELLOW
                 )
 
         return lines

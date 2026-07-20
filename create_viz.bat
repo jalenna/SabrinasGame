@@ -14,3 +14,7 @@
 @REM manim-slides present ResultsSlide
 
 @REM manim-slides present IntroSlide OddBoardsSlide ColorMatching SabrinasGame CNNSlide ResultsSlide MCMFSlide ConclusionSlide
+
+manim-slides render ./src/main.py && manim-slides present Presentation
+
+@REM manim-slides render -ql ./src/main.py && manim-slides present Presentation
