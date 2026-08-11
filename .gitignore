@@ -1,5 +1,8 @@
 file_assets
+present_assets
 file.html
+present.html
+*.zip
 
 # -------- Python --------
 

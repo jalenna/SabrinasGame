@@ -40,3 +40,7 @@ def algorithms_slide(slide: BasePresentation) -> None:
     move_to(2, mcmf_slide)
     slide.next_section()
     move_to(1, cnn_slide)
+
+    slide.next_slide()
+    slide.slide_tracker.inc()
+    reset_slide(slide)

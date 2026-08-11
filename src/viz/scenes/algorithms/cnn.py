@@ -225,7 +225,8 @@ def cnn_demo(slide: BasePresentation) -> None:
 
     slide.play(FadeIn(neighbor_sorting_text))
 
-    visual_board: VGroup = slide.board_generator.visual_boards[-1].scale(1.7)
+    visual_board: VGroup = slide.board_generator.visual_boards[-1].scale(
+        1.7).center()
 
     lines = slide.guided_depth_solver.solve(slide.problematic_tiles_dim,
                                             slide.problematic_tiles, visual_board)
