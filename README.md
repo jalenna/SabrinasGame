@@ -2,29 +2,52 @@
 
 An analysis of weighted matching approaches.
 
+<center>
+<img src="./resources/images/solved_board.png" alt="Solved board" width="256"/>
+</center>
+<center>
+Solved board
+</center>
+<br>
+
+In Sabrina's game, we start off with a grid of numbers. A valid cover of the
+grid means that every cell in the matrix is covered by exactly one tile.
+However, an invalid cover means that not all cells are covered. The objective of
+the game is to create a valid cover where the summed objective value of all
+tiles is lowest. The value of a tile is the difference between the largest and
+the smallest value covered by the tile.
+
 # Description
 
-// TODO
+This repo contains 3 algorithms that solve Sabrina's game:
 
-# Visuals
-
-// TODO
+- Minimum Cost Maximum Flow (MCMF)
+- Depth First Search (DFS)
+- Convolutional Neural Network (CNN) Guided DFS
 
 # Installation
 
-// TODO
+Create a virtual environment and run: `pip install -r requirements.txt`
 
 # Usage
 
-// TODO
+All algorithms are located in the [algorithms](./src/algorithms/) folder.
 
-# Support
+You can edit the [config.py](./src/algorithms/utils/config.py) and ml
+[config.py](./src/algorithms/ml/config.py) files to your needs.
 
-// TODO
+Make sure to train the guided model first before using it:
+`python -m src.algorithms.ml.train`
 
-# Authors and acknowledgment
+Take a look at the [core.py](./src/algorithms/utils/core.py) file too to get a
+better understanding of the code structure.
 
-// TODO
+Your solutions can be verified with the `solution_verifier` located in the
+[verifier.py](./src/algorithms/utils/verifier.py) file.
+
+You can evaluate the models using the `evaluate` function in the
+[eval.py](./src/algorithms/utils/eval.py) file. Just uncomment the last few
+lines, or import it in your own main function.
 
 # License
 
